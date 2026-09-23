@@ -7,23 +7,21 @@ export const GAME_CONFIG = {
   MAX_AMMO: 12,
   RELOAD_TIME_MS: 1200,
   ARENA_BOUNDS: 58,
-  GAME_TIME_LIMIT: 600, // 10 minutos
+  GAME_TIME_LIMIT: 600,
   PLAYER_MAX_HP: 100,
 };
 
-// Obstáculos em coordenadas do mapa. O formato é compatível com boxGeometry:
-// position = centro do obstáculo e size = [largura, altura, profundidade].
 export const MAP_OBSTACLES = [
-  { position: [-12, 2, -12], size: [6, 4, 6] },
-  { position: [12, 1.5, -16], size: [8, 3, 5] },
-  { position: [-22, 2, 8], size: [5, 4, 9] },
-  { position: [22, 1.5, 12], size: [7, 3, 6] },
-  { position: [0, 2, 18], size: [10, 4, 4] },
-  { position: [-34, 1.5, -24], size: [6, 3, 6] },
-  { position: [34, 2, -28], size: [8, 4, 5] },
-  { position: [-38, 1, 30], size: [5, 2, 10] },
-  { position: [36, 1.5, 32], size: [6, 3, 8] },
-  { position: [0, 1.5, -34], size: [12, 3, 4] },
+  { position: [-12, 7, -12], size: [8, 14, 8], sign: 'VIRUS DETECTED' },
+  { position: [12, 5, -16], size: [10, 10, 7], sign: 'SYSTEM BREACH' },
+  { position: [-22, 9, 8], size: [7, 18, 11], sign: 'MALWARE DETECTED' },
+  { position: [22, 6, 12], size: [9, 12, 8], sign: 'VIRUS REMOVED' },
+  { position: [0, 4, 18], size: [13, 8, 6], sign: 'VIRUS DETECTED' },
+  { position: [-34, 5, -24], size: [8, 10, 8], sign: 'SYSTEM BREACH' },
+  { position: [34, 8, -28], size: [10, 16, 7], sign: 'MALWARE DETECTED' },
+  { position: [-38, 4, 30], size: [7, 8, 12], sign: 'VIRUS REMOVED' },
+  { position: [36, 6, 32], size: [8, 12, 10], sign: 'VIRUS DETECTED' },
+  { position: [0, 5, -34], size: [15, 10, 5], sign: 'SYSTEM BREACH' },
 ];
 
 export const KEYBOARD_MAP = [
