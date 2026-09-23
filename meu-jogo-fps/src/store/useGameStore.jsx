@@ -16,8 +16,6 @@ export function GameProvider({ children }) {
   const [hitMessage, setHitMessage] = useState('');
   const [damageFlash, setDamageFlash] = useState(false);
   const [enemies, setEnemies] = useState([]);
-
-  // Posição síncrona do jogador acessível globalmente sem re-renderizar
   const playerPosRef = useRef(new THREE.Vector3(0, GAME_CONFIG.PLAYER_HEIGHT, 0));
 
   const resetGame = useCallback(() => {
@@ -27,45 +25,34 @@ export function GameProvider({ children }) {
     setPlayerHp(GAME_CONFIG.PLAYER_MAX_HP);
     setTimeLeft(GAME_CONFIG.GAME_TIME_LIMIT);
     setEnemies([]);
+    playerPosRef.current.set(0, GAME_CONFIG.PLAYER_HEIGHT, 0);
     setGameState('PLAYING');
   }, []);
 
   const takeDamage = useCallback((amount) => {
     setPlayerHp((prev) => {
-      const newHp = Math.max(0, prev - amount);
-      if (newHp === 0) {
+      // Esta guarda evita dano acumulado depois de GAMEOVER/PAUSED.
+      if (gameState !== 'PLAYING' || prev <= 0) return prev;
+      const nextHp = Math.max(0, prev - amount);
+      if (nextHp === 0) {
+        setEnemies([]);
         setGameState('GAMEOVER');
       }
-      return newHp;
+      return nextHp;
     });
-    sfx.playPlayerDamage();
-    setDamageFlash(true);
-    setTimeout(() => setDamageFlash(false), 200);
-  }, []);
+
+    if (gameState === 'PLAYING') {
+      sfx.playPlayerDamage();
+      setDamageFlash(true);
+      window.setTimeout(() => setDamageFlash(false), 200);
+    }
+  }, [gameState]);
 
   const value = {
-    gameState,
-    setGameState,
-    score,
-    setScore,
-    kills,
-    setKills,
-    ammo,
-    setAmmo,
-    playerHp,
-    setPlayerHp,
-    timeLeft,
-    setTimeLeft,
-    isReloading,
-    setIsReloading,
-    hitMessage,
-    setHitMessage,
-    damageFlash,
-    enemies,
-    setEnemies,
-    resetGame,
-    takeDamage,
-    playerPosRef,
+    gameState, setGameState, score, setScore, kills, setKills, ammo, setAmmo,
+    playerHp, setPlayerHp, timeLeft, setTimeLeft, isReloading, setIsReloading,
+    hitMessage, setHitMessage, damageFlash, enemies, setEnemies, resetGame,
+    takeDamage, playerPosRef,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

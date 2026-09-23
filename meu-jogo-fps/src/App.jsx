@@ -15,13 +15,16 @@ function GameScreen() {
 
   useEffect(() => {
     const handlePointerLockChange = () => {
-      if (!document.pointerLockElement && gameState === 'PLAYING') {
-        setGameState('PAUSED');
-      }
+      if (!document.pointerLockElement && gameState === 'PLAYING') setGameState('PAUSED');
     };
     document.addEventListener('pointerlockchange', handlePointerLockChange);
     return () => document.removeEventListener('pointerlockchange', handlePointerLockChange);
   }, [gameState, setGameState]);
+
+  useEffect(() => {
+    // Garante que controles e input não continuem ativos fora da partida.
+    if (gameState !== 'PLAYING' && document.pointerLockElement) document.exitPointerLock();
+  }, [gameState]);
 
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: '#050508', position: 'relative', overflow: 'hidden', fontFamily: 'system-ui, sans-serif', userSelect: 'none' }}>
@@ -29,16 +32,10 @@ function GameScreen() {
       {gameState === 'PAUSED' && <PauseMenu />}
       {(gameState === 'GAMEOVER' || gameState === 'VICTORY') && <EndGameMenu />}
       {gameState !== 'MENU' && <HUD />}
-
       <KeyboardControls map={KEYBOARD_MAP}>
         <Canvas shadows camera={{ fov: 75, position: [0, GAME_CONFIG.PLAYER_HEIGHT, 0] }}>
           <CyberArena />
-          {gameState === 'PLAYING' && (
-            <>
-              <PointerLockControls />
-              <Player />
-            </>
-          )}
+          {gameState === 'PLAYING' && <><PointerLockControls /><Player /></>}
         </Canvas>
       </KeyboardControls>
     </div>
@@ -46,9 +43,5 @@ function GameScreen() {
 }
 
 export default function App() {
-  return (
-    <GameProvider>
-      <GameScreen />
-    </GameProvider>
-  );
+  return <GameProvider><GameScreen /></GameProvider>;
 }
