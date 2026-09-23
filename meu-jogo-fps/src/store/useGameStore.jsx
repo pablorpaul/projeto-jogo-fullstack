@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import * as THREE from 'three';
 import { GAME_CONFIG } from '../utils/constants';
 import { sfx } from '../utils/soundEffects';
 
 const GameContext = createContext();
 
 export function GameProvider({ children }) {
-  const [gameState, setGameState] = useState('MENU'); // 'MENU', 'PLAYING', 'PAUSED', 'GAMEOVER', 'VICTORY'
+  const [gameState, setGameState] = useState('MENU');
   const [score, setScore] = useState(0);
   const [kills, setKills] = useState(0);
   const [ammo, setAmmo] = useState(GAME_CONFIG.MAX_AMMO);
@@ -16,7 +17,8 @@ export function GameProvider({ children }) {
   const [damageFlash, setDamageFlash] = useState(false);
   const [enemies, setEnemies] = useState([]);
 
-  const playerPosRef = useRef({ x: 0, y: GAME_CONFIG.PLAYER_HEIGHT, z: 0 });
+  // Posição síncrona do jogador acessível globalmente sem re-renderizar
+  const playerPosRef = useRef(new THREE.Vector3(0, GAME_CONFIG.PLAYER_HEIGHT, 0));
 
   const resetGame = useCallback(() => {
     setScore(0);

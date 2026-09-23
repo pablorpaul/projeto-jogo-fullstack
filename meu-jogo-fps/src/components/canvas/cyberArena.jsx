@@ -9,6 +9,7 @@ export function CyberArena() {
   const nextSpawnTime = useRef(0);
   const nextEnemyId = useRef(1);
 
+  // Timer de Sobrevivência (10 min)
   useEffect(() => {
     if (gameState !== 'PLAYING') return;
 
@@ -26,6 +27,7 @@ export function CyberArena() {
     return () => clearInterval(timer);
   }, [gameState, setTimeLeft, setGameState]);
 
+  // Spawns dinâmicos e contínuos de inimigos
   useFrame((state) => {
     if (gameState !== 'PLAYING') return;
 
@@ -41,14 +43,12 @@ export function CyberArena() {
       const spawnX = Math.cos(angle) * radius;
       const spawnZ = Math.sin(angle) * radius;
 
-      const isFastType = Math.random() < 0.3 + timeProgress * 0.3;
-
       const newEnemy = {
         id: nextEnemyId.current++,
-        position: [spawnX, 1.2, spawnZ],
-        hp: isFastType ? 1 : 2,
-        speed: isFastType ? 4.5 + timeProgress : 2.5 + timeProgress * 1.2,
-        type: isFastType ? 'fast' : 'heavy',
+        position: [spawnX, 1.0, spawnZ],
+        hp: 2,
+        speed: 3.2 + timeProgress * 1.5,
+        type: 'standard',
       };
 
       setEnemies((prev) => [...prev, newEnemy]);
@@ -62,6 +62,7 @@ export function CyberArena() {
       <pointLight position={[0, 8, 0]} intensity={2} color="#00f0ff" distance={25} />
       <pointLight position={[-15, 6, -10]} intensity={2} color="#ff0055" distance={20} />
 
+      {/* Chão */}
       <mesh position={[0, -0.25, 0]} receiveShadow>
         <boxGeometry args={[60, 0.5, 60]} />
         <meshStandardMaterial color="#0d0d15" roughness={0.4} metalness={0.6} />
@@ -69,14 +70,17 @@ export function CyberArena() {
 
       <gridHelper args={[60, 60, '#00f0ff', '#222233']} position={[0, 0.01, 0]} />
 
+      {/* Paredes da Arena */}
       <mesh position={[0, 4, -30]}><boxGeometry args={[60, 8, 1]} /><meshStandardMaterial color="#12121c" /></mesh>
       <mesh position={[0, 4, 30]}><boxGeometry args={[60, 8, 1]} /><meshStandardMaterial color="#12121c" /></mesh>
       <mesh position={[-30, 4, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[60, 8, 1]} /><meshStandardMaterial color="#12121c" /></mesh>
       <mesh position={[30, 4, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[60, 8, 1]} /><meshStandardMaterial color="#12121c" /></mesh>
 
+      {/* Obstáculos do Cenário */}
       <mesh position={[-6, 1.5, -5]} castShadow><boxGeometry args={[3, 3, 3]} /><meshStandardMaterial color="#1f1f2e" metalness={0.8} /></mesh>
       <mesh position={[6, 1, -8]} castShadow><boxGeometry args={[4, 2, 4]} /><meshStandardMaterial color="#1f1f2e" metalness={0.8} /></mesh>
 
+      {/* Renderização dos Inimigos Dinâmicos */}
       {enemies.map((enemy) => (
         <Enemy key={enemy.id} enemy={enemy} />
       ))}

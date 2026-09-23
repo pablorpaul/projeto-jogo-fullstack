@@ -3,12 +3,12 @@ import { Canvas } from '@react-three/fiber';
 import { PointerLockControls, KeyboardControls } from '@react-three/drei';
 import { GAME_CONFIG, KEYBOARD_MAP } from './utils/constants';
 import { GameProvider, useGameStore } from './store/useGameStore';
-import { MainMenu } from './components/ui/MainMenu';
-import { PauseMenu } from './components/ui/PauseMenu';
-import { EndGameMenu } from './components/ui/EndGameMenu';
+import { MainMenu } from './components/ui/mainMenu';
+import { PauseMenu } from './components/ui/pauseMenu';
+import { EndGameMenu } from './components/ui/endGameMenu';
 import { HUD } from './components/ui/HUD';
-import { CyberArena } from './components/canvas/CyberArena';
-import { Player } from './components/canvas/Player';
+import { CyberArena } from './components/canvas/cyberArena';
+import { Player } from './components/canvas/player';
 
 function GameScreen() {
   const { gameState, setGameState } = useGameStore();

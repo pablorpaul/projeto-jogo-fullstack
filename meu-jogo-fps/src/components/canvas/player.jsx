@@ -130,7 +130,8 @@ export function Player() {
     pos.current.z = THREE.MathUtils.clamp(pos.current.z, -GAME_CONFIG.ARENA_BOUNDS, GAME_CONFIG.ARENA_BOUNDS);
 
     camera.position.copy(pos.current);
-    playerPosRef.current = { x: pos.current.x, y: pos.current.y, z: pos.current.z };
+    // Atualiza a referência de posição em tempo real para a IA dos inimigos
+    playerPosRef.current = pos.current;
   });
 
   return (
