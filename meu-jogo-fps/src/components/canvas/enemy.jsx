@@ -85,7 +85,122 @@ export function Enemy({ enemy }) {
 
   return (
     <group ref={groupRef} position={enemy.position}>
-      {/* O restante da hierarquia visual do inimigo permanece igual. */}
+      {/* --- HEAD & VISOR --- */}
+      <group position={[0, 1.45, 0]}>
+        {/* Main Helmet */}
+        <mesh userData={targetData} castShadow>
+          <boxGeometry args={[0.38, 0.38, 0.38]} />
+          <meshStandardMaterial color={armorColor} roughness={0.3} metalness={0.8} />
+        </mesh>
+        {/* Cyber Visor / Eye Strip */}
+        <mesh position={[0, 0.04, 0.195]} userData={targetData}>
+          <boxGeometry args={[0.32, 0.1, 0.05]} />
+          <meshStandardMaterial
+            color={glowColor}
+            emissive={glowColor}
+            emissiveIntensity={1.8}
+            roughness={0.1}
+          />
+        </mesh>
+        {/* Helmet Antennas / Ear Plates */}
+        <mesh position={[-0.21, 0.08, 0]} userData={targetData}>
+          <boxGeometry args={[0.06, 0.22, 0.15]} />
+          <meshStandardMaterial color={bodyColor} metalness={0.9} />
+        </mesh>
+        <mesh position={[0.21, 0.08, 0]} userData={targetData}>
+          <boxGeometry args={[0.06, 0.22, 0.15]} />
+          <meshStandardMaterial color={bodyColor} metalness={0.9} />
+        </mesh>
+      </group>
+
+      {/* --- CHEST & TORSO --- */}
+      <group position={[0, 0.85, 0]}>
+        {/* Upper Chest Armor */}
+        <mesh userData={targetData} castShadow>
+          <boxGeometry args={[0.65, 0.6, 0.45]} />
+          <meshStandardMaterial color={armorColor} roughness={0.4} metalness={0.7} />
+        </mesh>
+        {/* Glowing Reactor Core */}
+        <mesh ref={coreRef} position={[0, 0.08, 0.23]} userData={targetData}>
+          <cylinderGeometry args={[0.12, 0.12, 0.06, 16]} rotation={[Math.PI / 2, 0, 0]} />
+          <meshStandardMaterial
+            color={glowColor}
+            emissive={glowColor}
+            emissiveIntensity={2.0}
+            roughness={0.1}
+          />
+        </mesh>
+        {/* Spine / Back Power Pack */}
+        <mesh position={[0, 0.05, -0.26]} userData={targetData}>
+          <boxGeometry args={[0.35, 0.45, 0.15]} />
+          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.9} />
+        </mesh>
+      </group>
+
+      {/* --- SHOULDERS & ARMS --- */}
+      {/* Left Arm */}
+      <group position={[-0.42, 1.05, 0]} ref={leftArmRef}>
+        <mesh position={[0, 0, 0]} userData={targetData}>
+          <boxGeometry args={[0.18, 0.18, 0.22]} />
+          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={0.6} />
+        </mesh>
+        <mesh position={[-0.04, -0.3, 0]} userData={targetData} castShadow>
+          <cylinderGeometry args={[0.07, 0.06, 0.45, 12]} />
+          <meshStandardMaterial color={bodyColor} metalness={0.8} />
+        </mesh>
+        {/* Energy Claw */}
+        <mesh position={[-0.04, -0.55, 0.05]} userData={targetData}>
+          <boxGeometry args={[0.04, 0.15, 0.08]} />
+          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.2} />
+        </mesh>
+      </group>
+
+      {/* Right Arm */}
+      <group position={[0.42, 1.05, 0]} ref={rightArmRef}>
+        <mesh position={[0, 0, 0]} userData={targetData}>
+          <boxGeometry args={[0.18, 0.18, 0.22]} />
+          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={0.6} />
+        </mesh>
+        <mesh position={[0.04, -0.3, 0]} userData={targetData} castShadow>
+          <cylinderGeometry args={[0.07, 0.06, 0.45, 12]} />
+          <meshStandardMaterial color={bodyColor} metalness={0.8} />
+        </mesh>
+        {/* Energy Claw */}
+        <mesh position={[0.04, -0.55, 0.05]} userData={targetData}>
+          <boxGeometry args={[0.04, 0.15, 0.08]} />
+          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.2} />
+        </mesh>
+      </group>
+
+      {/* --- LEGS --- */}
+      {/* Left Leg */}
+      <group position={[-0.18, 0.55, 0]} ref={leftLegRef}>
+        <mesh position={[0, -0.25, 0]} userData={targetData} castShadow>
+          <boxGeometry args={[0.16, 0.5, 0.18]} />
+          <meshStandardMaterial color={armorColor} roughness={0.4} metalness={0.7} />
+        </mesh>
+        {/* Knee Light */}
+        <mesh position={[0, -0.15, 0.1]} userData={targetData}>
+          <boxGeometry args={[0.1, 0.08, 0.04]} />
+          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.0} />
+        </mesh>
+      </group>
+
+      {/* Right Leg */}
+      <group position={[0.18, 0.55, 0]} ref={rightLegRef}>
+        <mesh position={[0, -0.25, 0]} userData={targetData} castShadow>
+          <boxGeometry args={[0.16, 0.5, 0.18]} />
+          <meshStandardMaterial color={armorColor} roughness={0.4} metalness={0.7} />
+        </mesh>
+        {/* Knee Light */}
+        <mesh position={[0, -0.15, 0.1]} userData={targetData}>
+          <boxGeometry args={[0.1, 0.08, 0.04]} />
+          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.0} />
+        </mesh>
+      </group>
+
+      {/* Point Light for dynamic glow cast onto surrounding environment */}
+      <pointLight position={[0, 0.9, 0.2]} intensity={2.5} color={glowColor} distance={4} />
     </group>
   );
 }

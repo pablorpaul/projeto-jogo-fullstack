@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useGameStore } from '../../store/useGameStore';
 import { GAME_CONFIG, MAP_OBSTACLES } from '../../utils/constants';
 import { Enemy } from './Enemy';
+import * as THREE from 'three';
 
 const MAP_SIZE = 120;
 const WALL_HEIGHT = 8;
