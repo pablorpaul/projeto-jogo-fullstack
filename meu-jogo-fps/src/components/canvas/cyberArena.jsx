@@ -67,7 +67,7 @@ export function CyberArena() {
       <pointLight position={[-30, 8, -20]} intensity={3} color="#ff0055" distance={32} />
 
       <mesh position={[0, -0.25, 0]} receiveShadow><boxGeometry args={[MAP_SIZE, 0.5, MAP_SIZE]} /><meshStandardMaterial color="#080b1c" roughness={0.4} metalness={0.7} /></mesh>
-      <gridHelper args={[MAP_SIZE, 120, '#00f0ff', '#1d1640']} position={[0, 0.01, 0} />
+      <gridHelper args={[MAP_SIZE, 120, '#00f0ff', '#1d1640']} position={[0, 0.01, 0]} />
       <mesh position={[0, WALL_HEIGHT / 2, -MAP_SIZE / 2]}><boxGeometry args={[MAP_SIZE, WALL_HEIGHT, WALL_THICKNESS]} /><meshStandardMaterial color="#0b0d26" /></mesh>
       <mesh position={[0, WALL_HEIGHT / 2, MAP_SIZE / 2]}><boxGeometry args={[MAP_SIZE, WALL_HEIGHT, WALL_THICKNESS]} /><meshStandardMaterial color="#0b0d26" /></mesh>
       <mesh position={[-MAP_SIZE / 2, WALL_HEIGHT / 2, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[MAP_SIZE, WALL_HEIGHT, WALL_THICKNESS]} /><meshStandardMaterial color="#0b0d26" /></mesh>
