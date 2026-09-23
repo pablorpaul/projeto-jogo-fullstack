@@ -11,6 +11,38 @@ export const GAME_CONFIG = {
   PLAYER_MAX_HP: 100,
 };
 
+export const ENEMY_TYPES = {
+  virus: {
+    label: 'Virus',
+    hp: 5,
+    speed: 1.8,
+    height: 3.8,
+    color: '#39ff88',
+    glow: '#00f0ff',
+    flying: true,
+  },
+  trojan: {
+    label: 'Cavalo de Troia',
+    hp: 1,
+    speed: 6.2,
+    height: 2.8,
+    color: '#ff7b39',
+    glow: '#ff176b',
+    flying: false,
+  },
+  worm: {
+    label: 'Worm',
+    hp: 3,
+    speed: 3.5,
+    height: 1.8,
+    color: '#d85cff',
+    glow: '#ff4fa3',
+    flying: false,
+  },
+};
+
+export const ENEMY_TYPE_IDS = Object.keys(ENEMY_TYPES);
+
 export const MAP_OBSTACLES = [
   { position: [-12, 7, -12], size: [8, 14, 8], sign: 'VIRUS DETECTED' },
   { position: [12, 5, -16], size: [10, 10, 7], sign: 'SYSTEM BREACH' },
