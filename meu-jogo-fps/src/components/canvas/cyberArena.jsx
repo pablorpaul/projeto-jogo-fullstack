@@ -77,9 +77,23 @@ export function CyberArena() {
       <mesh position={[30, 4, 0]} rotation={[0, Math.PI / 2, 0]}><boxGeometry args={[60, 8, 1]} /><meshStandardMaterial color="#12121c" /></mesh>
 
       {/* Obstáculos do Cenário */}
-      <mesh position={[-6, 1.5, -5]} castShadow><boxGeometry args={[3, 3, 3]} /><meshStandardMaterial color="#1f1f2e" metalness={0.8} /></mesh>
-      <mesh position={[6, 1, -8]} castShadow><boxGeometry args={[4, 2, 4]} /><meshStandardMaterial color="#1f1f2e" metalness={0.8} /></mesh>
+      <mesh
+        position={[-6, 1.5, -5]}
+        castShadow
+        userData={{ isCollider: true }}
+      >
+        <boxGeometry args={[3, 3, 3]} />
+        <meshStandardMaterial color="#1f1f2e" metalness={0.8} />
+      </mesh>
 
+      <mesh
+        position={[6, 1, -8]}
+        castShadow
+        userData={{ isCollider: true }}
+      >
+        <boxGeometry args={[4, 2, 4]} />
+        <meshStandardMaterial color="#1f1f2e" metalness={0.8} />
+      </mesh>
       {/* Renderização dos Inimigos Dinâmicos */}
       {enemies.map((enemy) => (
         <Enemy key={enemy.id} enemy={enemy} />

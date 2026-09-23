@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { GAME_CONFIG } from '../../utils/constants';
 import { sfx } from '../../utils/soundEffects';
 import { useGameStore } from '../../store/useGameStore';
-import { Gun } from './Gun';
+import { Gun } from './gun';
 
 export function Player() {
   const { camera, scene } = useThree();
@@ -16,6 +16,9 @@ export function Player() {
   const pos = useRef(new THREE.Vector3(0, GAME_CONFIG.PLAYER_HEIGHT, 0));
   const velocityY = useRef(0);
   const isGrounded = useRef(true);
+
+  const colliders = useRef([]);
+  const playerRadius = 0.45;
 
   const frontVector = useMemo(() => new THREE.Vector3(), []);
   const sideVector = useMemo(() => new THREE.Vector3(), []);
@@ -92,6 +95,60 @@ export function Player() {
     return () => window.removeEventListener('mousedown', onMouseDown);
   }, [handleShoot]);
 
+  useEffect(() => {
+    const objects = [];
+
+    scene.traverse((child) => {
+      if (child.isMesh && child.userData?.isCollider) {
+        objects.push(child);
+      }
+    });
+
+    colliders.current = objects;
+  }, [scene]);
+
+  const hasCollision = useCallback((candidatePosition) => {
+    const playerBox = {
+      minX: candidatePosition.x - playerRadius,
+      maxX: candidatePosition.x + playerRadius,
+      minZ: candidatePosition.z - playerRadius,
+      maxZ: candidatePosition.z + playerRadius,
+    };
+
+    return colliders.current.some((collider) => {
+      const box = new THREE.Box3().setFromObject(collider);
+
+      return (
+        playerBox.maxX > box.min.x &&
+        playerBox.minX < box.max.x &&
+        playerBox.maxZ > box.min.z &&
+        playerBox.minZ < box.max.z
+      );
+    });
+  }, []);
+
+  const moveWithCollision = useCallback((movement) => {
+    const nextPosition = pos.current.clone();
+
+    // Movimento horizontal
+    nextPosition.x += movement.x;
+
+    // Resolve somente o eixo X.
+    // Isso permite deslizar pela lateral do obstáculo.
+    if (!hasCollision(nextPosition)) {
+      pos.current.x = nextPosition.x;
+    }
+
+    // Movimento vertical no plano do mapa
+    nextPosition.copy(pos.current);
+    nextPosition.z += movement.z;
+
+    // Resolve somente o eixo Z.
+    if (!hasCollision(nextPosition)) {
+      pos.current.z = nextPosition.z;
+    }
+  }, [hasCollision]);
+
   useFrame((state, delta) => {
     const { forward, backward, left, right, jump, reload } = getKeys();
 
@@ -124,10 +181,19 @@ export function Player() {
       .applyEuler(camera.rotation);
 
     direction.y = 0;
-    pos.current.add(direction);
+    moveWithCollision(direction);
 
-    pos.current.x = THREE.MathUtils.clamp(pos.current.x, -GAME_CONFIG.ARENA_BOUNDS, GAME_CONFIG.ARENA_BOUNDS);
-    pos.current.z = THREE.MathUtils.clamp(pos.current.z, -GAME_CONFIG.ARENA_BOUNDS, GAME_CONFIG.ARENA_BOUNDS);
+    pos.current.x = THREE.MathUtils.clamp(
+      pos.current.x,
+      -GAME_CONFIG.ARENA_BOUNDS,
+      GAME_CONFIG.ARENA_BOUNDS
+    );
+
+    pos.current.z = THREE.MathUtils.clamp(
+      pos.current.z,
+      -GAME_CONFIG.ARENA_BOUNDS,
+      GAME_CONFIG.ARENA_BOUNDS
+    );
 
     camera.position.copy(pos.current);
     // Atualiza a referência de posição em tempo real para a IA dos inimigos
