@@ -1,25 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useGameStore } from '../../store/useGameStore';
-import { GAME_CONFIG } from '../../utils/constants';
+import { GAME_CONFIG, MAP_OBSTACLES } from '../../utils/constants';
 import { Enemy } from './Enemy';
 
 const MAP_SIZE = 120;
 const WALL_HEIGHT = 8;
 const WALL_THICKNESS = 1;
-
-const obstacles = [
-  { position: [-12, 2, -12], size: [6, 4, 6] },
-  { position: [12, 1.5, -16], size: [8, 3, 5] },
-  { position: [-22, 2, 8], size: [5, 4, 9] },
-  { position: [22, 1.5, 12], size: [7, 3, 6] },
-  { position: [0, 2, 18], size: [10, 4, 4] },
-  { position: [-34, 1.5, -24], size: [6, 3, 6] },
-  { position: [34, 2, -28], size: [8, 4, 5] },
-  { position: [-38, 1, 30], size: [5, 2, 10] },
-  { position: [36, 1.5, 32], size: [6, 3, 8] },
-  { position: [0, 1.5, -34], size: [12, 3, 4] },
-];
 
 export function CyberArena() {
   const { enemies, setEnemies, timeLeft, setTimeLeft, gameState, setGameState } = useGameStore();
@@ -53,10 +40,13 @@ export function CyberArena() {
     if (elapsedTime > nextSpawnTime.current) {
       nextSpawnTime.current = elapsedTime + spawnInterval;
 
-      const angle = Math.random() * Math.PI * 2;
-      const radius = 45 + Math.random() * 7;
-      const spawnX = Math.cos(angle) * radius;
-      const spawnZ = Math.sin(angle) * radius;
+      // Spawna exatamente próximo de uma das quatro bordas do mapa.
+      // Usamos margem para que o corpo do inimigo não apareça dentro da parede.
+      const edge = Math.floor(Math.random() * 4);
+      const coordinate = THREE.MathUtils.randFloat(-GAME_CONFIG.ARENA_BOUNDS + 2, GAME_CONFIG.ARENA_BOUNDS - 2);
+      const edgePosition = GAME_CONFIG.ARENA_BOUNDS - 1.5;
+      const spawnX = edge === 0 ? -edgePosition : edge === 1 ? edgePosition : coordinate;
+      const spawnZ = edge === 2 ? -edgePosition : edge === 3 ? edgePosition : coordinate;
 
       setEnemies((prev) => [...prev, {
         id: nextEnemyId.current++,
@@ -98,13 +88,8 @@ export function CyberArena() {
         <meshStandardMaterial color="#12121c" />
       </mesh>
 
-      {obstacles.map((obstacle, index) => (
-        <mesh
-          key={index}
-          position={obstacle.position}
-          castShadow
-          userData={{ isCollider: true }}
-        >
+      {MAP_OBSTACLES.map((obstacle, index) => (
+        <mesh key={index} position={obstacle.position} castShadow userData={{ isCollider: true }}>
           <boxGeometry args={obstacle.size} />
           <meshStandardMaterial color="#1f1f2e" metalness={0.8} />
         </mesh>
