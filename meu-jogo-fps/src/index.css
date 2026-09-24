@@ -1,0 +1,15 @@
+/* === RESETEO GLOBAL PARA EVITAR BARRAS DE DESPLAZAMIENTO (SCROLL) === */
+html, body, #root {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Esto fuerza a que desaparezcan las barras de scroll */
+    box-sizing: border-box;
+    background-color: #000; /* Fondo negro por si algo tarda en cargar */
+}
+
+/* El asterisco asegura que ningún elemento añada márgenes fantasma */
+* {
+    box-sizing: inherit;
+}
