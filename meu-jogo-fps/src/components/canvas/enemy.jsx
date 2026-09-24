@@ -2,90 +2,71 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../../store/useGameStore';
+import { ENEMY_TYPES, GAME_CONFIG } from '../../utils/constants';
 
-const OBSTACLES = [
-  { minX: -7.5, maxX: -4.5, minZ: -6.5, maxZ: -3.5 },
-  { minX: 4.0, maxX: 8.0, minZ: -10.0, maxZ: -6.0 },
-];
+const ENEMY_RADIUS = 0.6;
 
-function resolveEnvironmentPhysics(position, radius = 0.6) {
-  const BOUND = 27.5;
-  position.x = THREE.MathUtils.clamp(position.x, -BOUND, BOUND);
-  position.z = THREE.MathUtils.clamp(position.z, -BOUND, BOUND);
+function resolveEnvironmentPhysics(position, radius = ENEMY_RADIUS) {
+  const bound = GAME_CONFIG.ARENA_BOUNDS - radius;
+  position.x = THREE.MathUtils.clamp(position.x, -bound, bound);
+  position.z = THREE.MathUtils.clamp(position.z, -bound, bound);
+}
 
-  for (const obs of OBSTACLES) {
-    const minX = obs.minX - radius;
-    const maxX = obs.maxX + radius;
-    const minZ = obs.minZ - radius;
-    const maxZ = obs.maxZ + radius;
+function Material({ color, glow = color, intensity = 0.4 }) {
+  return <meshStandardMaterial color={color} emissive={glow} emissiveIntensity={intensity} flatShading />;
+}
 
-    if (position.x > minX && position.x < maxX && position.z > minZ && position.z < maxZ) {
-      const dLeft = Math.abs(position.x - minX);
-      const dRight = Math.abs(maxX - position.x);
-      const dTop = Math.abs(position.z - minZ);
-      const dBottom = Math.abs(maxZ - position.z);
+function Virus({ targetData, type }) {
+  return <group>
+    <mesh userData={targetData} castShadow><icosahedronGeometry args={[0.85, 1]} /><Material color={type.color} glow={type.glow} intensity={0.8} /></mesh>
+    {Array.from({ length: 8 }, (_, i) => {
+      const angle = i * Math.PI / 4;
+      return <mesh key={i} position={[Math.cos(angle) * 0.9, Math.sin(angle) * 0.9, 0]} rotation={[0, 0, angle]} userData={targetData}><boxGeometry args={[0.25, 0.65, 0.25]} /><Material color={type.glow} intensity={1.8} /></mesh>;
+    })}
+    <mesh position={[0, 0, 0.78]} userData={targetData}><boxGeometry args={[0.25, 0.25, 0.08]} /><Material color="#ff176b" intensity={2} /></mesh>
+  </group>;
+}
 
-      const minDist = Math.min(dLeft, dRight, dTop, dBottom);
+function Trojan({ targetData, type }) {
+  return <group>
+    <mesh position={[0, 0.45, 0]} userData={targetData} castShadow><boxGeometry args={[1.2, 0.8, 0.8]} /><Material color={type.color} /></mesh>
+    <mesh position={[0, 1.15, 0]} userData={targetData}><boxGeometry args={[0.7, 1.2, 0.7]} /><Material color={type.color} /></mesh>
+    <mesh position={[0, 1.9, 0]} rotation={[0, 0, -0.2]} userData={targetData}><boxGeometry args={[0.65, 0.8, 0.65]} /><Material color={type.color} /></mesh>
+    <mesh position={[0, 2.35, 0.05]} userData={targetData}><boxGeometry args={[0.75, 0.16, 0.7]} /><Material color={type.glow} intensity={1.8} /></mesh>
+    {[-0.4, 0.4].map((x) => <mesh key={x} position={[x, -0.05, 0]} userData={targetData}><boxGeometry args={[0.25, 0.7, 0.35]} /><Material color="#351d4d" /></mesh>)}
+  </group>;
+}
 
-      if (minDist === dLeft) position.x = minX;
-      else if (minDist === dRight) position.x = maxX;
-      else if (minDist === dTop) position.z = minZ;
-      else if (minDist === dBottom) position.z = maxZ;
-    }
-  }
+function Worm({ targetData, type }) {
+  return <group rotation={[0, 0, -0.15]}>
+    {[0, 0.6, 1.15, 1.65].map((x, i) => <mesh key={x} position={[x - 0.8, 0.75 + Math.sin(i) * 0.2, 0]} userData={targetData} castShadow><boxGeometry args={[0.75 - i * 0.08, 0.75 - i * 0.08, 0.75 - i * 0.08]} /><Material color={i === 0 ? type.glow : type.color} glow={type.glow} intensity={i === 0 ? 1.2 : 0.3} /></mesh>)}
+  </group>;
 }
 
 export function Enemy({ enemy }) {
   const groupRef = useRef();
-  const leftArmRef = useRef();
-  const rightArmRef = useRef();
-  const leftLegRef = useRef();
-  const rightLegRef = useRef();
-  const coreRef = useRef();
-
-  const { playerPosRef, takeDamage } = useGameStore();
   const lastAttackTime = useRef(0);
-
-  // Dynamic colors based on enemy health state
-  const isLowHp = enemy.hp === 1;
-  const glowColor = isLowHp ? '#ff0055' : '#00f0ff';
-  const bodyColor = '#181b26';
-  const armorColor = '#252a3b';
+  const { gameState, playerPosRef, takeDamage } = useGameStore();
+  const type = ENEMY_TYPES[enemy.type] || ENEMY_TYPES.virus;
+  const targetData = { isTarget: true, targetId: enemy.id };
 
   useFrame((state, delta) => {
-    if (!groupRef.current) return;
-
+    // O useFrame continua existindo no Canvas, mas a simulação fica congelada.
+    if (gameState !== 'PLAYING' || !groupRef.current) return;
     const currentPos = groupRef.current.position;
     const targetPos = playerPosRef.current;
-    const time = state.clock.getElapsedTime();
-
     const direction = new THREE.Vector3(targetPos.x - currentPos.x, 0, targetPos.z - currentPos.z);
-    const distanceToPlayer = direction.length();
+    const distance = direction.length();
 
-    // Walking / Movement logic
-    if (distanceToPlayer > 0.1) {
+    if (distance > 0.1) {
       direction.normalize().multiplyScalar(enemy.speed * delta);
       currentPos.add(direction);
-
-      resolveEnvironmentPhysics(currentPos, 0.6);
+      resolveEnvironmentPhysics(currentPos);
       groupRef.current.lookAt(targetPos.x, currentPos.y, targetPos.z);
-
-      // Limb movement animation (walking cycle)
-      const walkCycle = Math.sin(time * enemy.speed * 3);
-      if (leftArmRef.current) leftArmRef.current.rotation.x = walkCycle * 0.5;
-      if (rightArmRef.current) rightArmRef.current.rotation.x = -walkCycle * 0.5;
-      if (leftLegRef.current) leftLegRef.current.rotation.x = -walkCycle * 0.6;
-      if (rightLegRef.current) rightLegRef.current.rotation.x = walkCycle * 0.6;
     }
+    if (type.flying) currentPos.y = enemy.position[1] + Math.sin(state.clock.getElapsedTime() * 2.5) * 0.3;
 
-    // Pulse core effect
-    if (coreRef.current) {
-      coreRef.current.scale.setScalar(1 + Math.sin(time * 8) * 0.12);
-    }
-
-    // Player touch damage check
-    const TOUCH_DISTANCE = 1.2;
-    if (distanceToPlayer <= TOUCH_DISTANCE) {
+    if (distance <= 1.5) {
       const now = state.clock.getElapsedTime();
       if (now - lastAttackTime.current > 0.8) {
         takeDamage(10);
@@ -94,126 +75,10 @@ export function Enemy({ enemy }) {
     }
   });
 
-  const targetData = { isTarget: true, targetId: enemy.id };
-
-  return (
-    <group ref={groupRef} position={enemy.position}>
-      {/* --- HEAD & VISOR --- */}
-      <group position={[0, 1.45, 0]}>
-        {/* Main Helmet */}
-        <mesh userData={targetData} castShadow>
-          <boxGeometry args={[0.38, 0.38, 0.38]} />
-          <meshStandardMaterial color={armorColor} roughness={0.3} metalness={0.8} />
-        </mesh>
-        {/* Cyber Visor / Eye Strip */}
-        <mesh position={[0, 0.04, 0.195]} userData={targetData}>
-          <boxGeometry args={[0.32, 0.1, 0.05]} />
-          <meshStandardMaterial
-            color={glowColor}
-            emissive={glowColor}
-            emissiveIntensity={1.8}
-            roughness={0.1}
-          />
-        </mesh>
-        {/* Helmet Antennas / Ear Plates */}
-        <mesh position={[-0.21, 0.08, 0]} userData={targetData}>
-          <boxGeometry args={[0.06, 0.22, 0.15]} />
-          <meshStandardMaterial color={bodyColor} metalness={0.9} />
-        </mesh>
-        <mesh position={[0.21, 0.08, 0]} userData={targetData}>
-          <boxGeometry args={[0.06, 0.22, 0.15]} />
-          <meshStandardMaterial color={bodyColor} metalness={0.9} />
-        </mesh>
-      </group>
-
-      {/* --- CHEST & TORSO --- */}
-      <group position={[0, 0.85, 0]}>
-        {/* Upper Chest Armor */}
-        <mesh userData={targetData} castShadow>
-          <boxGeometry args={[0.65, 0.6, 0.45]} />
-          <meshStandardMaterial color={armorColor} roughness={0.4} metalness={0.7} />
-        </mesh>
-        {/* Glowing Reactor Core */}
-        <mesh ref={coreRef} position={[0, 0.08, 0.23]} userData={targetData}>
-          <cylinderGeometry args={[0.12, 0.12, 0.06, 16]} rotation={[Math.PI / 2, 0, 0]} />
-          <meshStandardMaterial
-            color={glowColor}
-            emissive={glowColor}
-            emissiveIntensity={2.0}
-            roughness={0.1}
-          />
-        </mesh>
-        {/* Spine / Back Power Pack */}
-        <mesh position={[0, 0.05, -0.26]} userData={targetData}>
-          <boxGeometry args={[0.35, 0.45, 0.15]} />
-          <meshStandardMaterial color={bodyColor} roughness={0.5} metalness={0.9} />
-        </mesh>
-      </group>
-
-      {/* --- SHOULDERS & ARMS --- */}
-      {/* Left Arm */}
-      <group position={[-0.42, 1.05, 0]} ref={leftArmRef}>
-        <mesh position={[0, 0, 0]} userData={targetData}>
-          <boxGeometry args={[0.18, 0.18, 0.22]} />
-          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={0.6} />
-        </mesh>
-        <mesh position={[-0.04, -0.3, 0]} userData={targetData} castShadow>
-          <cylinderGeometry args={[0.07, 0.06, 0.45, 12]} />
-          <meshStandardMaterial color={bodyColor} metalness={0.8} />
-        </mesh>
-        {/* Energy Claw */}
-        <mesh position={[-0.04, -0.55, 0.05]} userData={targetData}>
-          <boxGeometry args={[0.04, 0.15, 0.08]} />
-          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.2} />
-        </mesh>
-      </group>
-
-      {/* Right Arm */}
-      <group position={[0.42, 1.05, 0]} ref={rightArmRef}>
-        <mesh position={[0, 0, 0]} userData={targetData}>
-          <boxGeometry args={[0.18, 0.18, 0.22]} />
-          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={0.6} />
-        </mesh>
-        <mesh position={[0.04, -0.3, 0]} userData={targetData} castShadow>
-          <cylinderGeometry args={[0.07, 0.06, 0.45, 12]} />
-          <meshStandardMaterial color={bodyColor} metalness={0.8} />
-        </mesh>
-        {/* Energy Claw */}
-        <mesh position={[0.04, -0.55, 0.05]} userData={targetData}>
-          <boxGeometry args={[0.04, 0.15, 0.08]} />
-          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.2} />
-        </mesh>
-      </group>
-
-      {/* --- LEGS --- */}
-      {/* Left Leg */}
-      <group position={[-0.18, 0.55, 0]} ref={leftLegRef}>
-        <mesh position={[0, -0.25, 0]} userData={targetData} castShadow>
-          <boxGeometry args={[0.16, 0.5, 0.18]} />
-          <meshStandardMaterial color={armorColor} roughness={0.4} metalness={0.7} />
-        </mesh>
-        {/* Knee Light */}
-        <mesh position={[0, -0.15, 0.1]} userData={targetData}>
-          <boxGeometry args={[0.1, 0.08, 0.04]} />
-          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.0} />
-        </mesh>
-      </group>
-
-      {/* Right Leg */}
-      <group position={[0.18, 0.55, 0]} ref={rightLegRef}>
-        <mesh position={[0, -0.25, 0]} userData={targetData} castShadow>
-          <boxGeometry args={[0.16, 0.5, 0.18]} />
-          <meshStandardMaterial color={armorColor} roughness={0.4} metalness={0.7} />
-        </mesh>
-        {/* Knee Light */}
-        <mesh position={[0, -0.15, 0.1]} userData={targetData}>
-          <boxGeometry args={[0.1, 0.08, 0.04]} />
-          <meshStandardMaterial color={glowColor} emissive={glowColor} emissiveIntensity={1.0} />
-        </mesh>
-      </group>
-
-      {/* Point Light for dynamic glow cast onto surrounding environment */}
-      <pointLight position={[0, 0.9, 0.2]} intensity={2.5} color={glowColor} distance={4} />
-    </group>
-  );
+  return <group ref={groupRef} position={enemy.position}>
+    {enemy.type === 'virus' && <Virus targetData={targetData} type={type} />}
+    {enemy.type === 'trojan' && <Trojan targetData={targetData} type={type} />}
+    {enemy.type === 'worm' && <Worm targetData={targetData} type={type} />}
+    <pointLight position={[0, 1.2, 0]} intensity={2} color={type.glow} distance={4} />
+  </group>;
 }

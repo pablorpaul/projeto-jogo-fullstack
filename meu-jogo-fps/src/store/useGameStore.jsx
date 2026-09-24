@@ -16,9 +16,13 @@ export function GameProvider({ children }) {
   const [hitMessage, setHitMessage] = useState('');
   const [damageFlash, setDamageFlash] = useState(false);
   const [enemies, setEnemies] = useState([]);
-
-  // Posição síncrona do jogador acessível globalmente sem re-renderizar
   const playerPosRef = useRef(new THREE.Vector3(0, GAME_CONFIG.PLAYER_HEIGHT, 0));
+  const gameStateRef = useRef('MENU');
+
+  const changeGameState = useCallback((nextState) => {
+    gameStateRef.current = nextState;
+    setGameState(nextState);
+  }, []);
 
   const resetGame = useCallback(() => {
     setScore(0);
@@ -26,46 +30,48 @@ export function GameProvider({ children }) {
     setAmmo(GAME_CONFIG.MAX_AMMO);
     setPlayerHp(GAME_CONFIG.PLAYER_MAX_HP);
     setTimeLeft(GAME_CONFIG.GAME_TIME_LIMIT);
+    setIsReloading(false);
+    setHitMessage('');
+    setDamageFlash(false);
     setEnemies([]);
-    setGameState('PLAYING');
-  }, []);
+    playerPosRef.current.set(0, GAME_CONFIG.PLAYER_HEIGHT, 0);
+    changeGameState('PLAYING');
+  }, [changeGameState]);
+
+  const returnToMenu = useCallback(() => {
+    setEnemies([]);
+    setIsReloading(false);
+    setHitMessage('');
+    setDamageFlash(false);
+    changeGameState('MENU');
+  }, [changeGameState]);
 
   const takeDamage = useCallback((amount) => {
+    if (gameStateRef.current !== 'PLAYING') return;
+
     setPlayerHp((prev) => {
-      const newHp = Math.max(0, prev - amount);
-      if (newHp === 0) {
-        setGameState('GAMEOVER');
+      if (gameStateRef.current !== 'PLAYING' || prev <= 0) return prev;
+      const nextHp = Math.max(0, prev - amount);
+      if (nextHp === 0) {
+        setEnemies([]);
+        changeGameState('GAMEOVER');
       }
-      return newHp;
+      return nextHp;
     });
+
     sfx.playPlayerDamage();
     setDamageFlash(true);
-    setTimeout(() => setDamageFlash(false), 200);
-  }, []);
+    window.setTimeout(() => setDamageFlash(false), 200);
+  }, [changeGameState]);
 
   const value = {
     gameState,
-    setGameState,
-    score,
-    setScore,
-    kills,
-    setKills,
-    ammo,
-    setAmmo,
-    playerHp,
-    setPlayerHp,
-    timeLeft,
-    setTimeLeft,
-    isReloading,
-    setIsReloading,
-    hitMessage,
-    setHitMessage,
-    damageFlash,
-    enemies,
-    setEnemies,
-    resetGame,
-    takeDamage,
-    playerPosRef,
+    setGameState: changeGameState,
+    score, setScore, kills, setKills, ammo, setAmmo,
+    playerHp, setPlayerHp, timeLeft, setTimeLeft,
+    isReloading, setIsReloading, hitMessage, setHitMessage,
+    damageFlash, enemies, setEnemies, resetGame, returnToMenu,
+    takeDamage, playerPosRef,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
