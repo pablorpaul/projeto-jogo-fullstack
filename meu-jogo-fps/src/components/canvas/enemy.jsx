@@ -82,3 +82,7 @@ export function Enemy({ enemy }) {
     <pointLight position={[0, 1.2, 0]} intensity={2} color={type.glow} distance={4} />
   </group>;
 }
+
+export function getRandomEnemyType(index) {
+  return ENEMY_TYPE_IDS[index % ENEMY_TYPE_IDS.length];
+}
