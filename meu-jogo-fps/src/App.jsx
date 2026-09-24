@@ -22,7 +22,6 @@ function GameScreen() {
   }, [gameState, setGameState]);
 
   useEffect(() => {
-    // Garante que controles e input não continuem ativos fora da partida.
     if (gameState !== 'PLAYING' && document.pointerLockElement) document.exitPointerLock();
   }, [gameState]);
 
