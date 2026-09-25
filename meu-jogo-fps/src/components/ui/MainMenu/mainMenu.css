@@ -21,15 +21,13 @@
     opacity: 0.9;
     position: relative;
     width: 100%;
-    max-width: 600px;
+    max-width: 700px; 
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Adicionada transição para o hover do marco */
     transition: transform 0.3s ease, filter 0.3s ease;
 }
 
-/* Hover no marco inteiro (aumenta ligeiramente e cria um brilho ciano) */
 .menu-interactivo:hover {
     transform: scale(1.02);
     filter: drop-shadow(0 0 20px rgba(69, 243, 255, 0.4));
@@ -44,36 +42,42 @@
 /* === CONTENIDO INTERIOR === */
 .contenido-interior {
     position: absolute;
-    top: 10%;    
-    bottom: 12%; 
+    top: 8%;    
+    bottom: 10%; 
     left: 8%;
     right: 8%;
     width: 84%;
-    height: 78%; 
+    height: 82%; 
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; 
 }
 
 /* === TÍTULO / LOGO === */
 .logo-juego {
-    width: 65%; 
+    position: absolute;
+    top: -37%; 
+    left: 50%;
+    transform: translateX(-50%); 
+    width: 72%; 
     height: auto; 
-    max-height: 25%; 
-    object-fit: contain;
-    margin-bottom: 2%; 
+    z-index: 40; 
+    pointer-events: none; 
 }
 
 /* === CONTENEDOR DE BOTONES === */
 .contenedor-botones {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 70%; 
+    flex-wrap: wrap;         
+    justify-content: center; 
+    align-content: flex-end; 
+    
+    height: 77%;            
     width: 100%;
-    gap: 2%; 
+    /* Quitamos el gap horizontal (ahora es 0) para que no haya fuerza que los separe */
+    gap: 0; 
+    margin-top: auto; 
+    margin-bottom: 0%; 
 }
 
 /* === ESTILO DE LOS BOTONES === */
@@ -82,13 +86,25 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    height: 26%; 
+    
+    width: 45%;              
+    height: 32%;             
+    
+    /* Margen negativo a los lados (-3%) para succionarlos hacia el centro exacto */
+    margin: 0 -5%;         
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
     transition: transform 0.2s ease, filter 0.2s ease;
+    position: relative;
+    z-index: 20; 
 }
 
 .boton-juego img {
     height: 100%; 
     width: auto;  
+    max-width: 100%;         
     display: block;
     object-fit: contain;
 }
@@ -96,6 +112,7 @@
 .boton-juego:hover {
     transform: scale(1.05);
     filter: brightness(1.2) drop-shadow(0px 0px 10px rgba(255, 0, 85, 0.8));
+    z-index: 50; 
 }
 
 .boton-juego:active {
@@ -111,6 +128,10 @@
     padding: 20px 30px;
     border: 2px solid #45f3ff;
     box-shadow: 0 0 15px rgba(69, 243, 255, 0.2);
+    margin-top: auto;
+    margin-bottom: 2%;
+    z-index: 20;
+    position: relative;
 }
 
 .instructions-title {
@@ -155,34 +176,4 @@
     background: #45f3ff;
     color: #000;
     box-shadow: 0 0 15px #45f3ff;
-}
-
-/* === FOOTER (CRÉDITOS) === */
-.cyber-footer {
-    position: absolute;
-    bottom: 20px;
-    right: 25px;
-    text-align: right;
-    background-color: rgba(5, 10, 15, 0.9);
-    padding: 12px 20px;
-    border: 2px solid #45f3ff;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-    font-family: sans-serif;
-}
-
-.footer-college {
-    font-weight: bold;
-    color: #45f3ff;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
-    margin-bottom: 4px;
-}
-
-.footer-students {
-    color: #a0a0c0;
-    font-size: 0.8rem;
-}
-
-.footer-students strong {
-    color: #ffffff;
 }
