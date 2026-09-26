@@ -1,0 +1,591 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* === FONDO PRINCIPAL DEL JUEGO === */
+.main-menu-container {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-image: url('/mainmenu.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+}
+
+/* === MARCO CIBERNÉTICO === */
+.menu-interactivo {
+    opacity: 0.9;
+    position: relative;
+    width: 100%;
+    max-width: 700px; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    will-change: transform, filter;
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.menu-interactivo:hover {
+    transform: scale(1.02);
+    filter: drop-shadow(0 0 20px rgba(69, 243, 255, 0.4));
+}
+
+.modo-opciones-horizontal:hover {
+    transform: none;
+    filter: drop-shadow(0 0 15px rgba(69, 243, 255, 0.2));
+}
+
+.imagen-fondo {
+    width: 100%;
+    display: block;
+    filter: drop-shadow(0 0 25px rgba(0, 0, 0, 0.9));
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* === CONTENIDO INTERIOR === */
+.contenido-interior {
+    position: absolute;
+    top: 8%;    
+    bottom: 10%; 
+    left: 8%;
+    right: 8%;
+    width: 84%;
+    height: 82%; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* === TÍTULO / LOGO === */
+.logo-juego {
+    position: absolute;
+    top: -37%; 
+    left: 50%;
+    transform: translateX(-50%); 
+    width: 72%; 
+    height: auto; 
+    z-index: 40; 
+    pointer-events: none; 
+}
+
+/* === CONTENEDOR DE BOTONES === */
+.contenedor-botones {
+    display: flex;
+    flex-wrap: wrap;         
+    justify-content: center; 
+    align-content: flex-end; 
+    height: 77%;            
+    width: 100%;
+    gap: 0; 
+    margin-top: auto; 
+    margin-bottom: 0%; 
+}
+
+/* === ESTILO DE LOS BOTONES === */
+.boton-juego {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 45%;              
+    height: 32%;             
+    margin: 0 -5%;         
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s ease, filter 0.2s ease;
+    position: relative;
+    z-index: 20; 
+}
+
+.boton-juego img {
+    height: 100%; 
+    width: auto;  
+    max-width: 100%;         
+    display: block;
+    object-fit: contain;
+}
+
+.boton-juego:hover {
+    transform: scale(1.05);
+    filter: brightness(1.2) drop-shadow(0px 0px 10px rgba(255, 0, 85, 0.8));
+    z-index: 50; 
+}
+
+.boton-juego:active {
+    transform: scale(0.95);
+}
+
+/* === PANEL DE INSTRUCCIONES GENERAL === */
+.instructions-panel {
+    text-align: left;
+    max-width: 420px;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    padding: 5px 10px;
+    z-index: 20;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.cyber-font {
+    font-family: 'VT323', monospace;
+    font-size: 1.25rem; 
+    color: #d0d0e0;
+}
+
+/* EFECTO MATRIX Y RETARDOS */
+.matrix-text {
+    opacity: 0;
+    animation: matrixDrop 0.4s ease-out forwards;
+}
+
+.delay-0 { animation-delay: 0s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-6 { animation-delay: 0.6s; }
+
+@keyframes matrixDrop {
+    0% { 
+        opacity: 0; 
+        transform: translateY(-20px); 
+        color: #45f3ff; 
+        text-shadow: 0 0 10px #45f3ff;
+    }
+    100% { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.instructions-title {
+    color: #45f3ff;
+    margin: 0;
+    font-size: 1rem;
+    text-shadow: 0 0 6px rgba(69, 243, 255, 0.6);
+    letter-spacing: 0.5px;
+}
+
+.warning-text {
+    color: #ff0055;
+    animation: blinkText 1.5s infinite;
+}
+
+@keyframes blinkText {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.highlight-text {
+    color: #45f3ff;
+}
+
+.text-danger {
+    color: #ff0055;
+    font-weight: bold;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* === ADAPTACIÓN PERFECTA AL MARCO VERTICAL (TUTORIAL Y CRÉDITOS) === */
+.panel-content-wrapper.vertical-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 6px;
+}
+
+.cyber-header-box {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 1px solid rgba(69, 243, 255, 0.3);
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+}
+
+.blink-dot {
+    width: 6px;
+    height: 6px;
+    background: #45f3ff;
+    box-shadow: 0 0 5px #45f3ff;
+    animation: dotPulse 1s infinite alternate;
+}
+
+.green-dot {
+    background: #39ff14;
+    box-shadow: 0 0 5px #39ff14;
+}
+
+@keyframes dotPulse {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
+}
+
+.cyber-hud-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+.hud-card {
+    background: rgba(5, 10, 20, 0.75);
+    border-left: 2px solid #45f3ff;
+    padding: 3px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.hud-key {
+    color: #45f3ff;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.hud-desc {
+    margin: 0;
+    font-size: 1rem;
+    color: #c0c0d0;
+}
+
+.credits-hud-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(5, 10, 20, 0.75);
+    border: 1px solid rgba(57, 255, 20, 0.3);
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.credit-row {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-bottom: 6px;
+}
+
+.institution-row {
+    border-bottom: none;
+}
+
+.credit-role {
+    color: #39ff14;
+    font-size: 0.85rem;
+}
+
+.credit-name {
+    font-size: 1.1rem;
+    color: #ffffff;
+}
+
+/* === FOOTER CON VERSIÓN V1.0.0 A LA DERECHA === */
+.panel-footer-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(69, 243, 255, 0.3);
+    padding-top: 5px;
+    margin-top: 4px;
+    width: 100%;
+}
+
+.footer-status {
+    font-size: 0.75rem;
+    color: #88a0c0;
+}
+
+.pixel-version {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    color: #ff0055;
+    background: rgba(255, 0, 85, 0.1);
+    border: 1px solid #ff0055;
+    padding: 2px 5px;
+    box-shadow: 0 0 4px rgba(255, 0, 85, 0.4);
+    letter-spacing: 1px;
+}
+
+/* === PANEL DE OPCIONES (HORIZONTAL ORIGINAL) === */
+.options-wrapper-horizontal {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto; /* <-- SOLUCIÓN CLAVE: Evita que el contenedor empuje el botón de Return hasta el fondo */
+    justify-content: center;
+    align-items: center;
+    padding-top: 10px;
+}
+
+.options-main-title {
+    color: #45f3ff;
+    margin-top: 0;
+    text-align: center;
+    font-size: 1.05rem;
+    margin-bottom: 16px;
+    text-shadow: 0 0 5px rgba(69, 243, 255, 0.4);
+    letter-spacing: 1px;
+}
+
+.options-grid-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 18px; 
+    width: 92%;
+    margin: 0 auto;
+}
+
+.option-item-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.option-item-compact label {
+    font-size: 0.95rem;
+    color: #d0d0e0;
+}
+
+.option-full-compact {
+    grid-column: span 2;
+    margin-top: 4px;
+}
+
+.pixel-slider {
+    appearance: none;
+    width: 100%;
+    margin: 0 auto;
+    height: 12px;
+    background: #020408;
+    border: 1px solid #45f3ff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(69, 243, 255, 0.3);
+}
+
+.speaker-thumb::-webkit-slider-thumb {
+    appearance: none;
+    width: 22px;
+    height: 26px;
+    background: #ff0055 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='%23fff'><path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z'/></svg>") no-repeat center;
+    border: 1px solid #ffffff;
+    cursor: pointer;
+    box-shadow: 0 0 8px #ff0055;
+}
+
+.mouse-thumb::-webkit-slider-thumb {
+    appearance: none;
+    width: 22px;
+    height: 26px;
+    background: #45f3ff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='%23000'><path d='M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93zM4 11c0 4.97 4.03 9 9 9s9-4.03 9-9H4zm7-9.93C7.05 1.56 4 4.92 4 9h7V1.07z'/></svg>") no-repeat center;
+    border: 1px solid #ffffff;
+    cursor: pointer;
+    box-shadow: 0 0 8px #45f3ff;
+}
+
+.pixel-select {
+    font-family: 'VT323', monospace;
+    font-size: 1.05rem;
+    background: #020408;
+    color: #d0d0e0;
+    border: 1px solid #45f3ff;
+    padding: 3px;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 0 4px rgba(69, 243, 255, 0.4);
+    
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='%2345f3ff'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+}
+
+.pixel-select:focus {
+    border-color: #ff0055;
+    box-shadow: 0 0 6px rgba(255, 0, 85, 0.6);
+}
+
+.pixel-select option {
+    background: #020408;
+    color: #d0d0e0;
+    padding: 5px;
+}
+
+.pixel-select option:hover,
+.pixel-select option:focus,
+.pixel-select option:checked {
+    background: #45f3ff !important;
+    color: #020408 !important;
+}
+
+/* === PANEL DE SALIDA (QUIT) AGRUPADO Y CENTRADO === */
+.quit-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    gap: 15px; 
+}
+
+.quit-title {
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.quit-text {
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.quit-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    height: 40px; 
+}
+
+.boton-juego.btn-quit-action {
+    width: 40%;
+    height: 100%;
+    margin: 0;
+}
+
+/* === PANTALLA DE TRANSICIÓN TIPO TERMINAL KALI LINUX === */
+.terminal-boot-screen {
+    position: absolute;
+    inset: 0;
+    background: rgba(3, 5, 10, 0.98);
+    border: 1px solid #45f3ff;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    z-index: 60;
+    font-size: 1.3rem;
+    color: #45f3ff;
+    text-shadow: 0 0 8px #45f3ff;
+    box-shadow: inset 0 0 15px rgba(0, 255, 255, 0.2);
+    animation: terminalFadeIn 0.2s ease-out;
+}
+
+@keyframes terminalFadeIn {
+    from { opacity: 0; transform: scale(0.99); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.terminal-line {
+    margin: 3px 0;
+    white-space: pre-line;
+    line-height: 1.4;
+}
+
+.terminal-cursor {
+    animation: cursorBlink 0.5s infinite;
+    font-weight: bold;
+    color: #ff0055;
+}
+
+@keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* === BOTÓN DE VOLVER (RETURN) ORIGINAL INTACTO === */
+.back-btn-wrapper {
+    margin-top: 10px; 
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 40px; 
+}
+
+/* === SOLUCIÓN EXACTA PARA OPTIONS: UBICA EL BOTÓN DONDE MARCASTE === */
+.back-options-fix {
+    margin-top: 15px; /* Lo empuja exactamente debajo del recuadro del selector, uniéndose al bloque de Options de forma centrada */
+    transform: none;  /* Removemos cálculos extraños de altura para que el flexbox central lo posicione naturalmente */
+}
+
+.boton-juego.btn-back-action {
+    width: 28%;
+    height: 100%;
+    margin: 0;
+}
+
+/* =========================================================
+   === MODIFICACIONES: GIRO HORARIO Y ANCHO DEL MARCO VERTICAL === 
+   ========================================================= */
+
+.giro-horario .imagen-fondo {
+    transform: rotate(90deg) scale(0.95);
+}
+
+.giro-horario .contenido-interior {
+    left: 28%;
+    right: 28%;
+    top: -12%;
+    bottom: -12%;
+    width: auto;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.giro-horario .instructions-panel {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0 2px;
+    margin: 0;
+    width: 100%;
+    max-width: 265px; 
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.giro-horario .instructions-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    text-align: center;
+    width: 100%;
+}
+
+.modo-opciones-horizontal .instructions-panel {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Esto agrupa verticalmente al centro a los elementos hermanos (options + botón) */
+    align-items: center;
+    padding: 4px 10px;
+}
