@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crosshair } from './Crosshair';
+import { Crosshair } from './crosshair';
 import { useGameStore } from '../../store/useGameStore';
 import { GAME_CONFIG } from '../../utils/constants';
 

@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useGameStore } from '../../store/useGameStore';
 import { ENEMY_TYPE_IDS, ENEMY_TYPES, GAME_CONFIG, MAP_OBSTACLES } from '../../utils/constants';
-import { Enemy } from './Enemy';
+import { Enemy } from './enemy';
 import { CyberBuilding } from './CyberBuilding';
 import { CyberSign } from './CyberSign';
 
