@@ -3,67 +3,86 @@ import { useFrame } from '@react-three/fiber';
 import { useController, useXR } from '@react-three/xr';
 import * as THREE from 'three';
 
-export function Gun({ isShooting, isReloading }) {
+function GunMesh({ isShooting, isReloading }) {
   const gunGroupRef = useRef();
   const { isPresenting } = useXR();
-  const rightController = useController('right');
 
   useFrame((state, delta) => {
     if (!gunGroupRef.current) return;
     const t = state.clock.getElapsedTime();
 
-    // Se estiver em VR e o grupo do controlador direito já estiver pronto:
-    if (isPresenting && rightController?.grp) {
-      gunGroupRef.current.position.copy(rightController.grp.position);
-      gunGroupRef.current.quaternion.copy(rightController.grp.quaternion);
+    if (isShooting) {
+      gunGroupRef.current.position.z = -0.05;
+      gunGroupRef.current.rotation.x = 0.15;
+    } else {
+      gunGroupRef.current.position.z = THREE.MathUtils.lerp(gunGroupRef.current.position.z, -0.1, delta * 15);
+      gunGroupRef.current.rotation.x = THREE.MathUtils.lerp(gunGroupRef.current.rotation.x, 0, delta * 15);
+    }
 
-      // Deslocamento para alinhar o cabo da arma à mão do jogador
-      gunGroupRef.current.translateZ(-0.12);
-      gunGroupRef.current.translateY(-0.02);
-      gunGroupRef.current.rotateX(-Math.PI / 12);
-    } else if (!isPresenting) {
-      // Posição e animação padrão para o modo PC / Desktop
-      gunGroupRef.current.position.x = 0.25 + Math.sin(t * 2) * 0.005;
-      gunGroupRef.current.position.y = -0.25 + Math.cos(t * 4) * 0.005;
-
-      if (isShooting) {
-        gunGroupRef.current.position.z = -0.45;
-        gunGroupRef.current.rotation.x = 0.15;
-      } else {
-        gunGroupRef.current.position.z = THREE.MathUtils.lerp(gunGroupRef.current.position.z, -0.5, delta * 15);
-        gunGroupRef.current.rotation.x = THREE.MathUtils.lerp(gunGroupRef.current.rotation.x, 0, delta * 15);
-      }
-
-      if (isReloading) {
-        gunGroupRef.current.rotation.z = Math.sin(t * 15) * 0.3;
-        gunGroupRef.current.position.y = -0.35;
-      } else {
-        gunGroupRef.current.rotation.z = THREE.MathUtils.lerp(gunGroupRef.current.rotation.z, 0, delta * 10);
-      }
+    if (isReloading) {
+      gunGroupRef.current.rotation.z = Math.sin(t * 15) * 0.3;
+    } else {
+      gunGroupRef.current.rotation.z = THREE.MathUtils.lerp(gunGroupRef.current.rotation.z, 0, delta * 10);
     }
   });
 
   return (
-    <group ref={gunGroupRef} position={isPresenting ? [0.2, -0.2, -0.5] : [0.25, -0.25, -0.5]}>
-      {/* Corpo principal */}
+    <group ref={gunGroupRef} position={[0, -0.02, -0.1]} rotation={[-Math.PI / 12, 0, 0]}>
+      {/* Corpo da arma */}
       <mesh position={[0, 0, 0]}>
-        <boxGeometry args={[0.08, 0.12, 0.4]} />
+        <boxGeometry args={[0.08, 0.12, 0.35]} />
         <meshBasicMaterial color="#1a1a24" />
       </mesh>
 
-      {/* Cano do canhão */}
-      <group position={[0, 0.03, -0.25]} rotation={[Math.PI / 2, 0, 0]}>
+      {/* Cano */}
+      <group position={[0, 0.03, -0.2]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh>
-          <cylinderGeometry args={[0.025, 0.025, 0.3, 16]} />
+          <cylinderGeometry args={[0.025, 0.025, 0.25, 16]} />
           <meshBasicMaterial color="#00f0ff" />
         </mesh>
       </group>
 
-      {/* Mira neon */}
-      <mesh position={[0, 0.08, -0.05]}>
-        <boxGeometry args={[0.04, 0.04, 0.1]} />
+      {/* Mira Neon */}
+      <mesh position={[0, 0.08, -0.02]}>
+        <boxGeometry args={[0.03, 0.03, 0.08]} />
         <meshBasicMaterial color="#ff0055" />
       </mesh>
+
+      {/* Feixe de Laser para Mira VR */}
+      {isPresenting && (
+        <group position={[0, 0.03, -0.325]}>
+          {/* Linha/Cilindro do Laser */}
+          <mesh position={[0, 0, -7.5]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.003, 0.003, 15, 8]} />
+            <meshBasicMaterial color="#ff0055" transparent opacity={0.6} />
+          </mesh>
+
+          {/* Ponto indicador no final da mira */}
+          <mesh position={[0, 0, -15]}>
+            <sphereGeometry args={[0.025, 16, 16]} />
+            <meshBasicMaterial color="#ff0055" />
+          </mesh>
+        </group>
+      )}
+    </group>
+  );
+}
+
+export function Gun({ isShooting, isReloading }) {
+  const { isPresenting } = useXR();
+  const rightController = useController('right');
+
+  if (isPresenting && rightController?.grp) {
+    return (
+      <primitive object={rightController.grp}>
+        <GunMesh isShooting={isShooting} isReloading={isReloading} />
+      </primitive>
+    );
+  }
+
+  return (
+    <group position={isPresenting ? [0.2, -0.2, -0.4] : [0.25, -0.25, -0.5]}>
+      <GunMesh isShooting={isShooting} isReloading={isReloading} />
     </group>
   );
 }

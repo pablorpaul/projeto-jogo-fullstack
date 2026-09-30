@@ -8,6 +8,7 @@ import { sfx } from '../../utils/soundEffects';
 import { useGameStore } from '../../store/useGameStore';
 import { Gun } from './gun';
 
+// HUD 3D que acompanha a visão no VR
 function VRHUD({ camera }) {
   const { ammo, playerHp, score, kills } = useGameStore();
   const hudRef = useRef();
@@ -33,6 +34,47 @@ function VRHUD({ camera }) {
       </Text>
       <Text position={[-0.38, -0.04, 0]} fontSize={0.035} color="#ff0055" anchorX="left">
         {`SCORE: ${score} | KILLS: ${kills}`}
+      </Text>
+    </group>
+  );
+}
+
+// Botão 3D para sair do modo VR
+function ExitVRButton({ camera }) {
+  const { session } = useXR();
+  const buttonRef = useRef();
+  const [hovered, setHovered] = useState(false);
+
+  useFrame(() => {
+    if (buttonRef.current && camera) {
+      buttonRef.current.position.copy(camera.position);
+      buttonRef.current.quaternion.copy(camera.quaternion);
+
+      // Posiciona o botão na parte inferior do campo de visão
+      buttonRef.current.translateZ(-0.75);
+      buttonRef.current.translateY(-0.35);
+    }
+  });
+
+  const handleExit = () => {
+    if (session) {
+      session.end();
+    }
+  };
+
+  return (
+    <group
+      ref={buttonRef}
+      onClick={handleExit}
+      onPointerOver={() => setHovered(true)}
+      onPointerOut={() => setHovered(false)}
+    >
+      <mesh position={[0, 0, 0]}>
+        <planeGeometry args={[0.3, 0.08]} />
+        <meshBasicMaterial color={hovered ? '#ff176b' : '#351d4d'} />
+      </mesh>
+      <Text position={[0, 0, 0.01]} fontSize={0.035} color="#ffffff" anchorX="center" anchorY="middle">
+        SAIR DO VR ❌
       </Text>
     </group>
   );
@@ -83,7 +125,6 @@ export function Player() {
 
     const raycaster = new THREE.Raycaster();
 
-    // Se estiver em VR e o controlador direito já estiver instanciado, dispara da mão
     if (isPresenting && rightController?.grp) {
       const controllerPos = new THREE.Vector3();
       const controllerDir = new THREE.Vector3(0, 0, -1);
@@ -93,7 +134,6 @@ export function Player() {
 
       raycaster.set(controllerPos, controllerDir);
     } else {
-      // Fallback para PC ou antes do controlador carregar
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
     }
 
@@ -236,7 +276,12 @@ export function Player() {
   return (
     <>
       <Gun isShooting={isShooting} isReloading={isReloading} />
-      {isPresenting && <VRHUD camera={camera} />}
+      {isPresenting && (
+        <>
+          <VRHUD camera={camera} />
+          <ExitVRButton camera={camera} />
+        </>
+      )}
     </>
   );
 }
