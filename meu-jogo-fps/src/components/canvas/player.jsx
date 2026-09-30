@@ -118,7 +118,7 @@ export function Player() {
 
     const raycaster = new THREE.Raycaster();
 
-    // 1. Raycaster direcionado a partir do controlador VR ou da Câmera
+    // 1. Aponta o Raycaster a partir do controlador VR ou da câmara
     if (isPresenting && rightController?.grp) {
       const controllerPos = new THREE.Vector3();
       const controllerDir = new THREE.Vector3(0, 0, -1);
@@ -131,21 +131,35 @@ export function Player() {
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
     }
 
-    // 2. Coleta de alvos na cena
+    // 2. Procura alvos na cena
     const hitables = [];
     scene.traverse((child) => {
-      if (child.isMesh && (child.userData?.isTarget || child.parent?.userData?.isTarget)) {
-        hitables.push(child);
+      if (child.isMesh) {
+        let curr = child;
+        while (curr) {
+          if (curr.userData && curr.userData.isTarget) {
+            hitables.push(child);
+            break;
+          }
+          curr = curr.parent;
+        }
       }
     });
 
-    // 3. Verificação de impacto e aplicação de dano
+    // 3. Aplica o dano se houver colisão
     const intersects = raycaster.intersectObjects(hitables, true);
     if (intersects.length > 0) {
       let hitObj = intersects[0].object;
-      
-      // Procura a ID do alvo subindo a árvore do objeto se necessário
-      let targetId = hitObj.userData?.targetId || hitObj.parent?.userData?.targetId;
+      let targetId = null;
+
+      let curr = hitObj;
+      while (curr) {
+        if (curr.userData && curr.userData.targetId) {
+          targetId = curr.userData.targetId;
+          break;
+        }
+        curr = curr.parent;
+      }
 
       if (targetId) {
         sfx.playHit();

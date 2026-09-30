@@ -12,17 +12,20 @@ export function Gun({ isShooting, isReloading }) {
     if (!gunRef.current) return;
     const t = state.clock.getElapsedTime();
 
-    if (isPresenting) {
-      // Se o controlador do VR já foi instanciado, acopla a arma na mão
-      if (rightController?.grp) {
-        gunRef.current.position.copy(rightController.grp.position);
-        gunRef.current.quaternion.copy(rightController.grp.quaternion);
-        
-        // Ajuste de offset para o cabo da arma encaixar na mão
-        gunRef.current.translateZ(-0.1);
-        gunGroupOffset(gunRef.current, isShooting);
+    if (isPresenting && rightController?.grp) {
+      // Sincroniza a posição e rotação diretamente com a mão direita
+      gunRef.current.position.copy(rightController.grp.position);
+      gunRef.current.quaternion.copy(rightController.grp.quaternion);
+
+      // Deslocamento para o cabo encaixar na mão
+      gunRef.current.translateZ(-0.12);
+      gunRef.current.translateY(-0.02);
+      gunRef.current.rotateX(-Math.PI / 12);
+
+      if (isShooting) {
+        gunRef.current.translateZ(0.04);
       }
-    } else {
+    } else if (!isPresenting) {
       // Posição para o modo Desktop (PC)
       gunRef.current.position.x = 0.25 + Math.sin(t * 2) * 0.005;
       gunRef.current.position.y = -0.25 + Math.cos(t * 4) * 0.005;
@@ -44,14 +47,14 @@ export function Gun({ isShooting, isReloading }) {
   });
 
   return (
-    <group ref={gunRef} position={[0.25, -0.25, -0.5]}>
+    <group ref={gunRef} position={isPresenting ? [0.2, -0.2, -0.4] : [0.25, -0.25, -0.5]}>
       {/* Corpo principal */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[0.08, 0.12, 0.35]} />
         <meshBasicMaterial color="#1a1a24" />
       </mesh>
 
-      {/* Cano */}
+      {/* Cano do canhão */}
       <group position={[0, 0.03, -0.2]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh>
           <cylinderGeometry args={[0.025, 0.025, 0.25, 16]} />
@@ -59,13 +62,13 @@ export function Gun({ isShooting, isReloading }) {
         </mesh>
       </group>
 
-      {/* Mira Neon */}
+      {/* Mira neon */}
       <mesh position={[0, 0.08, -0.02]}>
         <boxGeometry args={[0.03, 0.03, 0.08]} />
         <meshBasicMaterial color="#ff0055" />
       </mesh>
 
-      {/* Laser de Mira VR */}
+      {/* Feixe de Laser de Mira para o VR */}
       {isPresenting && (
         <group position={[0, 0.03, -0.325]}>
           <mesh position={[0, 0, -7.5]} rotation={[Math.PI / 2, 0, 0]}>
@@ -80,10 +83,4 @@ export function Gun({ isShooting, isReloading }) {
       )}
     </group>
   );
-}
-
-function gunGroupOffset(gunGroup, isShooting) {
-  if (isShooting) {
-    gunGroup.translateZ(-0.02);
-  }
 }
