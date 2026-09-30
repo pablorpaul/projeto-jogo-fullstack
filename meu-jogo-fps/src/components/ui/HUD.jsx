@@ -1,4 +1,5 @@
 import React from 'react';
+import { useXR } from '@react-three/xr';
 import { Crosshair } from './crosshair';
 import { useGameStore } from '../../store/useGameStore';
 import { GAME_CONFIG } from '../../utils/constants';
@@ -10,8 +11,12 @@ function formatTime(seconds) {
 }
 
 export function HUD() {
+  const { isPresenting } = useXR();
   const { score, kills, ammo, playerHp, timeLeft, isReloading, hitMessage, damageFlash } = useGameStore();
   const hpPercentage = (playerHp / GAME_CONFIG.PLAYER_MAX_HP) * 100;
+
+  // Se estiver em VR, oculta a HUD 2D do DOM para não criar conflito visual/overlay
+  if (isPresenting) return null;
 
   return (
     <>
@@ -34,12 +39,11 @@ export function HUD() {
         </div>
       )}
 
-      {}
       <div style={{
         position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 20,
         backgroundColor: 'rgba(10, 12, 20, 0.85)', padding: '10px 24px', borderRadius: '12px',
         border: '1px solid rgba(0, 240, 255, 0.3)', backdropFilter: 'blur(6px)', textAlign: 'center',
-        boxShadow: '0 0 20px rgba(0, 240, 255, 0.15)'
+        boxShadow: '0 0 20px rgba(0, 240, 255, 0.15)', pointerEvents: 'none'
       }}>
         <div style={{ fontSize: '0.7rem', color: '#8080a0', letterSpacing: '1px', textTransform: 'uppercase' }}>
           SOBREVIVÊNCIA
@@ -53,7 +57,6 @@ export function HUD() {
         </div>
       </div>
 
-      {}
       <div style={{
         position: 'absolute', top: '20px', left: '20px', zIndex: 20, display: 'flex', gap: '20px',
         backgroundColor: 'rgba(10, 12, 20, 0.8)', padding: '12px 20px', borderRadius: '10px',
