@@ -11,8 +11,6 @@ const MAP_SIZE = 120;
 const WALL_HEIGHT = 8;
 const WALL_THICKNESS = 1;
 
-// Mantém a seleção dos tipos no mesmo módulo que controla o spawn.
-// Não depende de uma função exportada pelo componente Enemy.
 function getSpawnEnemyType(spawnIndex) {
   return ENEMY_TYPE_IDS[spawnIndex % ENEMY_TYPE_IDS.length];
 }
@@ -62,7 +60,6 @@ export function CyberArena() {
     const typeId = getSpawnEnemyType(enemyId - 1);
     const type = ENEMY_TYPES[typeId];
 
-    // A proteção evita que um tipo mal configurado interrompa o loop de spawn.
     if (!type) return;
 
     setEnemies((previousEnemies) => [
@@ -80,13 +77,12 @@ export function CyberArena() {
   return (
     <>
       <color attach="background" args={['#03051a']} />
-      <fog attach="fog" args={['#03051a', 38, 110]} />
-      <ambientLight intensity={0.35} color="#526dff" />
-      <directionalLight position={[15, 20, 10]} intensity={1.2} color="#9bb8ff" castShadow />
-      <pointLight position={[0, 10, 0]} intensity={3} color="#00f0ff" distance={42} />
-      <pointLight position={[-30, 8, -20]} intensity={3} color="#ff0055" distance={32} />
+      
+      <ambientLight intensity={0.5} color="#526dff" />
+      <directionalLight position={[15, 20, 10]} intensity={1.0} color="#9bb8ff" />
+      <pointLight position={[0, 10, 0]} intensity={2} color="#00f0ff" distance={42} />
 
-      <mesh position={[0, -0.25, 0]} receiveShadow>
+      <mesh position={[0, -0.25, 0]}>
         <boxGeometry args={[MAP_SIZE, 0.5, MAP_SIZE]} />
         <meshStandardMaterial color="#080b1c" roughness={0.4} metalness={0.7} />
       </mesh>

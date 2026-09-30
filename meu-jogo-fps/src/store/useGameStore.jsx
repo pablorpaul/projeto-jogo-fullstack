@@ -38,6 +38,20 @@ export function GameProvider({ children }) {
     changeGameState('PLAYING');
   }, [changeGameState]);
 
+  const startVRGame = useCallback(() => {
+    setScore(0);
+    setKills(0);
+    setAmmo(GAME_CONFIG.MAX_AMMO);
+    setPlayerHp(GAME_CONFIG.PLAYER_MAX_HP);
+    setTimeLeft(GAME_CONFIG.GAME_TIME_LIMIT);
+    setIsReloading(false);
+    setHitMessage('');
+    setDamageFlash(false);
+    setEnemies([]);
+    playerPosRef.current.set(0, GAME_CONFIG.PLAYER_HEIGHT, 0);
+    changeGameState('PLAYING');
+  }, [changeGameState]);
+
   const returnToMenu = useCallback(() => {
     setEnemies([]);
     setIsReloading(false);
@@ -70,7 +84,7 @@ export function GameProvider({ children }) {
     score, setScore, kills, setKills, ammo, setAmmo,
     playerHp, setPlayerHp, timeLeft, setTimeLeft,
     isReloading, setIsReloading, hitMessage, setHitMessage,
-    damageFlash, enemies, setEnemies, resetGame, returnToMenu,
+    damageFlash, enemies, setEnemies, resetGame, startVRGame, returnToMenu,
     takeDamage, playerPosRef,
   };
 

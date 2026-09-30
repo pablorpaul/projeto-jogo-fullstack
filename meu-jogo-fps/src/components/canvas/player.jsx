@@ -1,22 +1,55 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useKeyboardControls } from '@react-three/drei';
-import { useXRInputSourceState } from '@react-three/xr'; // <-- IMPORTAÇÃO DO WEBXR
+import { useKeyboardControls, Text } from '@react-three/drei';
+import { useController, useXR } from '@react-three/xr';
 import * as THREE from 'three';
 import { GAME_CONFIG } from '../../utils/constants';
 import { sfx } from '../../utils/soundEffects';
 import { useGameStore } from '../../store/useGameStore';
 import { Gun } from './gun';
 
+// HUD 3D que se posiciona relativa à câmera a cada frame (efeito visor/capacete)
+function VRHUD({ camera }) {
+  const { ammo, playerHp, score, kills } = useGameStore();
+  const hudRef = useRef();
+
+  useFrame(() => {
+    if (hudRef.current && camera) {
+      // Pega a posição e rotação exatas da câmera do VR
+      hudRef.current.position.copy(camera.position);
+      hudRef.current.quaternion.copy(camera.quaternion);
+
+      // Desloca o painel ligeiramente para frente e acima no campo de visão
+      hudRef.current.translateZ(-0.75);
+      hudRef.current.translateY(0.28);
+    }
+  });
+
+  return (
+    <group ref={hudRef}>
+      <mesh position={[0, 0, -0.01]}>
+        <planeGeometry args={[0.85, 0.2]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.65} />
+      </mesh>
+      <Text position={[-0.38, 0.04, 0]} fontSize={0.04} color="#00f0ff" anchorX="left">
+        {`HP: ${playerHp} | AMMO: ${ammo}/${GAME_CONFIG.MAX_AMMO}`}
+      </Text>
+      <Text position={[-0.38, -0.04, 0]} fontSize={0.035} color="#ff0055" anchorX="left">
+        {`SCORE: ${score} | KILLS: ${kills}`}
+      </Text>
+    </group>
+  );
+}
+
 export function Player() {
   const { camera, scene } = useThree();
+  const { isPresenting, player } = useXR();
   const [, getKeys] = useKeyboardControls();
   const { ammo, setAmmo, isReloading, setIsReloading, setEnemies, setScore, setKills, setHitMessage, playerPosRef } = useGameStore();
   const [isShooting, setIsShooting] = useState(false);
 
-  // Leitura dos controles do VR
-  const controllerRight = useXRInputSourceState('controller', 'right');
-  const controllerLeft = useXRInputSourceState('controller', 'left');
+  const leftController = useController('left');
+  const rightController = useController('right');
   const lastTriggerPressed = useRef(false);
 
   const pos = useRef(new THREE.Vector3(0, GAME_CONFIG.PLAYER_HEIGHT, 0));
@@ -27,6 +60,7 @@ export function Player() {
   const frontVector = useMemo(() => new THREE.Vector3(), []);
   const sideVector = useMemo(() => new THREE.Vector3(), []);
   const direction = useMemo(() => new THREE.Vector3(), []);
+  const tempEuler = useMemo(() => new THREE.Euler(0, 0, 0, 'YXZ'), []);
 
   const handleReload = useCallback(() => {
     if (ammo < GAME_CONFIG.MAX_AMMO && !isReloading) {
@@ -51,7 +85,6 @@ export function Player() {
     setTimeout(() => setIsShooting(false), 80);
 
     const raycaster = new THREE.Raycaster();
-    // Dispara o raio exatamente para onde a visão/câmera do headset está apontando
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
 
     const hitables = [];
@@ -125,33 +158,36 @@ export function Player() {
   }, [collidesAt]);
 
   useFrame((state, delta) => {
-    // 1. Leitura do Teclado (para quando jogar no PC)
     const { forward, backward, left, right, jump, reload } = getKeys();
     if (reload) handleReload();
 
-    // 2. Leitura dos Joysticks do VR (para quando jogar no VR)
+    // 1. Leitura e Normalização do Joystick do VR
     let vrForward = 0;
     let vrSide = 0;
 
-    if (controllerLeft?.gamepad) {
-      // Eixo Y do joystick esquerdo para ir pra frente e pra trás
-      vrForward = controllerLeft.gamepad.axes[3] || 0; 
-      // Eixo X do joystick esquerdo para ir pros lados
-      vrSide = controllerLeft.gamepad.axes[2] || 0;
+    if (leftController?.inputSource?.gamepad) {
+      const axes = leftController.inputSource.gamepad.axes;
+      
+      // Mapeamento dinâmico para garantir força total nos eixos laterais
+      const rawX = axes[2] !== undefined && Math.abs(axes[2]) > 0.05 ? axes[2] : (axes[0] || 0);
+      const rawY = axes[3] !== undefined && Math.abs(axes[3]) > 0.05 ? axes[3] : (axes[1] || 0);
+
+      // Aplica multiplicador para equiparar a velocidade lateral com a frontal
+      vrSide = Math.abs(rawX) > 0.08 ? rawX * 1.5 : 0;
+      vrForward = Math.abs(rawY) > 0.08 ? rawY : 0;
     }
 
-    // 3. Verificação do Gatilho do VR para Atirar
-    if (controllerRight?.gamepad) {
-      const triggerValue = controllerRight.gamepad.buttons[0]?.value || 0;
-      const isTriggerPressed = triggerValue > 0.5;
-
-      if (isTriggerPressed && !lastTriggerPressed.current) {
+    // 2. Disparo no gatilho
+    if (rightController?.inputSource?.gamepad) {
+      const trigger = rightController.inputSource.gamepad.buttons[0]?.value || 0;
+      const isPressed = trigger > 0.5;
+      if (isPressed && !lastTriggerPressed.current) {
         handleShoot();
       }
-      lastTriggerPressed.current = isTriggerPressed;
+      lastTriggerPressed.current = isPressed;
     }
 
-    // Aplicação da Física e Pulo
+    // 3. Gravidade e Pulo
     if (!isGrounded.current) velocityY.current -= GAME_CONFIG.GRAVITY * delta;
     if (jump && isGrounded.current) {
       velocityY.current = GAME_CONFIG.JUMP_FORCE;
@@ -165,27 +201,41 @@ export function Player() {
       isGrounded.current = true;
     }
 
-    // Combina o movimento do Teclado com o movimento do Joystick do VR
+    // Combinação de Teclado e VR
     const moveZ = (backward ? 1 : 0) - (forward ? 1 : 0) + vrForward;
     const moveX = (left ? 1 : 0) - (right ? 1 : 0) + vrSide;
 
     frontVector.set(0, 0, moveZ);
     sideVector.set(moveX, 0, 0);
-    direction.subVectors(frontVector, sideVector).normalize()
-      .multiplyScalar(GAME_CONFIG.SPEED * delta).applyEuler(camera.rotation);
+
+    // Usa a rotação da câmera para direcionar o movimento
+    tempEuler.setFromQuaternion(camera.quaternion);
+    const yawEuler = new THREE.Euler(0, tempEuler.y, 0);
+
+    direction.subVectors(frontVector, sideVector);
+    if (direction.lengthSq() > 0) {
+      direction.normalize().multiplyScalar(GAME_CONFIG.SPEED * delta).applyEuler(yawEuler);
+    }
     direction.y = 0;
 
     moveWithCollision(direction);
     pos.current.x = THREE.MathUtils.clamp(pos.current.x, -GAME_CONFIG.ARENA_BOUNDS, GAME_CONFIG.ARENA_BOUNDS);
     pos.current.z = THREE.MathUtils.clamp(pos.current.z, -GAME_CONFIG.ARENA_BOUNDS, GAME_CONFIG.ARENA_BOUNDS);
 
-    camera.position.copy(pos.current);
+    // Posição no Rig do XR ou Câmera 2D
+    if (isPresenting && player) {
+      player.position.set(pos.current.x, pos.current.y - GAME_CONFIG.PLAYER_HEIGHT, pos.current.z);
+    } else {
+      camera.position.copy(pos.current);
+    }
+
     playerPosRef.current = pos.current;
   });
 
   return (
-    <primitive object={camera}>
+    <>
       <Gun isShooting={isShooting} isReloading={isReloading} />
-    </primitive>
+      {isPresenting && <VRHUD camera={camera} />}
+    </>
   );
 }

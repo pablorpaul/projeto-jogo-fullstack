@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { PointerLockControls, KeyboardControls } from '@react-three/drei';
-import { XR, createXRStore } from '@react-three/xr'; // <-- IMPORTAÇÃO DO WEBXR
+import { VRButton, Controllers, Hands, XR, useXR } from '@react-three/xr';
 import { GAME_CONFIG, KEYBOARD_MAP } from './utils/constants';
 import { GameProvider, useGameStore } from './store/useGameStore';
 import { MainMenu } from './components/ui/MainMenu/mainMenu';
@@ -11,22 +11,37 @@ import { HUD } from './components/ui/HUD';
 import { CyberArena } from './components/canvas/cyberArena';
 import { Player } from './components/canvas/player';
 
-// Cria a store global do WebXR
-const xrStore = createXRStore();
+// Componente interno para escutar a entrada no VR e ativar o jogo
+function VRManager() {
+  const { isPresenting } = useXR();
+  const { setGameState, gameState } = useGameStore();
+
+  useEffect(() => {
+    if (isPresenting && gameState !== 'PLAYING') {
+      setGameState('PLAYING');
+    }
+  }, [isPresenting, gameState, setGameState]);
+
+  return null;
+}
 
 function GameScreen() {
   const { gameState, setGameState } = useGameStore();
 
   useEffect(() => {
     const handlePointerLockChange = () => {
-      if (!document.pointerLockElement && gameState === 'PLAYING') setGameState('PAUSED');
+      if (!document.pointerLockElement && gameState === 'PLAYING') {
+        setGameState('PAUSED');
+      }
     };
     document.addEventListener('pointerlockchange', handlePointerLockChange);
     return () => document.removeEventListener('pointerlockchange', handlePointerLockChange);
   }, [gameState, setGameState]);
 
   useEffect(() => {
-    if (gameState !== 'PLAYING' && document.pointerLockElement) document.exitPointerLock();
+    if (gameState !== 'PLAYING' && document.pointerLockElement) {
+      document.exitPointerLock();
+    }
   }, [gameState]);
 
   return (
@@ -36,31 +51,14 @@ function GameScreen() {
       {(gameState === 'GAMEOVER' || gameState === 'VICTORY') && <EndGameMenu />}
       {gameState !== 'MENU' && <HUD />}
 
-      {/* Botão para entrar no modo VR (Visível a partir da tela de jogo ou menu) */}
-      <button
-        onClick={() => xrStore.enterVR()}
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          right: '20px',
-          zIndex: 1000,
-          padding: '12px 24px',
-          background: '#00f0ff',
-          color: '#000',
-          border: 'none',
-          borderRadius: '8px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          boxShadow: '0 0 10px #00f0ff'
-        }}
-      >
-        MODO VR 🥽
-      </button>
+      <VRButton />
 
       <KeyboardControls map={KEYBOARD_MAP}>
-        <Canvas shadows camera={{ fov: 75, position: [0, GAME_CONFIG.PLAYER_HEIGHT, 0] }}>
-          {/* Envolve toda a cena do Three.js no XR */}
-          <XR store={xrStore}>
+        <Canvas camera={{ fov: 75, position: [0, GAME_CONFIG.PLAYER_HEIGHT, 0], near: 0.1, far: 300 }}>
+          <XR>
+            <VRManager />
+            <Controllers />
+            <Hands />
             <CyberArena />
             {gameState === 'PLAYING' && (
               <>
