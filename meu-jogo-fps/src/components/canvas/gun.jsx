@@ -1,47 +1,88 @@
 import React, { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useController, useXR } from '@react-three/xr';
 import * as THREE from 'three';
 
-function GunMesh({ isShooting, isReloading }) {
-  const gunGroupRef = useRef();
+export function Gun({ isShooting, isReloading }) {
+  const gunRef = useRef();
+  const { camera } = useThree();
   const { isPresenting } = useXR();
+  const rightController = useController('right');
 
   useFrame((state, delta) => {
-    if (!gunGroupRef.current) return;
+    if (!gunRef.current) return;
     const t = state.clock.getElapsedTime();
 
-    if (isShooting) {
-      gunGroupRef.current.position.z = -0.05;
-      gunGroupRef.current.rotation.x = 0.15;
-    } else {
-      gunGroupRef.current.position.z = THREE.MathUtils.lerp(gunGroupRef.current.position.z, -0.1, delta * 15);
-      gunGroupRef.current.rotation.x = THREE.MathUtils.lerp(gunGroupRef.current.rotation.x, 0, delta * 15);
+    // === MODO VR ===
+    if (isPresenting && rightController?.controller) {
+      // 1. Copia a posição EXATA mundial do controle VR para a arma
+      rightController.controller.getWorldPosition(gunRef.current.position);
+      rightController.controller.getWorldQuaternion(gunRef.current.quaternion);
+
+      // 2. Ajustes locais para encaixar o cabo da arma na mão
+      gunRef.current.translateZ(-0.1);
+      gunRef.current.translateY(-0.02);
+      gunRef.current.rotateX(-Math.PI / 12);
+
+      // 3. Recuo (Recoil) do tiro no VR
+      if (isShooting) {
+        gunRef.current.translateZ(0.04);
+        gunRef.current.rotateX(0.1);
+      }
+    } 
+    // === MODO PC / DESKTOP ===
+    else {
+      // 1. Copia a posição mundial da câmera
+      camera.getWorldPosition(gunRef.current.position);
+      camera.getWorldQuaternion(gunRef.current.quaternion);
+
+      // 2. Movimento suave (sway) de respiração
+      const swayX = Math.sin(t * 2) * 0.005;
+      const swayY = Math.cos(t * 4) * 0.005;
+      
+      // 3. Posiciona no canto inferior direito da visão
+      gunRef.current.translateX(0.25 + swayX);
+      gunRef.current.translateY(-0.25 + swayY);
+      gunRef.current.translateZ(-0.5);
+
+      // 4. Recuo (Recoil) do tiro no PC
+      if (isShooting) {
+        gunRef.current.translateZ(0.05);
+        gunRef.current.rotateX(0.15);
+      }
     }
 
+    // === ANIMAÇÃO GERAL DE RECARREGAR ===
     if (isReloading) {
-      gunGroupRef.current.rotation.z = Math.sin(t * 15) * 0.3;
-    } else {
-      gunGroupRef.current.rotation.z = THREE.MathUtils.lerp(gunGroupRef.current.rotation.z, 0, delta * 10);
+      gunRef.current.rotateZ(Math.sin(t * 15) * 0.3);
+      if (!isPresenting) gunRef.current.translateY(-0.1);
     }
   });
 
+  // Retornamos APENAS UMA estrutura de grupo, o que impede clones/duplicações!
   return (
-    <group ref={gunGroupRef} position={[0, -0.02, -0.1]} rotation={[-Math.PI / 12, 0, 0]}>
+    <group ref={gunRef}>
+      {/* Corpo principal */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[0.08, 0.12, 0.35]} />
         <meshBasicMaterial color="#1a1a24" />
       </mesh>
+
+      {/* Cano do canhão */}
       <group position={[0, 0.03, -0.2]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh>
           <cylinderGeometry args={[0.025, 0.025, 0.25, 16]} />
           <meshBasicMaterial color="#00f0ff" />
         </mesh>
       </group>
+
+      {/* Mira neon */}
       <mesh position={[0, 0.08, -0.02]}>
         <boxGeometry args={[0.03, 0.03, 0.08]} />
         <meshBasicMaterial color="#ff0055" />
       </mesh>
+
+      {/* Feixe de Laser de Mira Exclusivo do VR */}
       {isPresenting && (
         <group position={[0, 0.03, -0.325]}>
           <mesh position={[0, 0, -7.5]} rotation={[Math.PI / 2, 0, 0]}>
@@ -54,26 +95,6 @@ function GunMesh({ isShooting, isReloading }) {
           </mesh>
         </group>
       )}
-    </group>
-  );
-}
-
-export function Gun({ isShooting, isReloading }) {
-  const { isPresenting } = useXR();
-  const rightController = useController('right');
-
-  // Usa "controller" para R3F XR v5
-  if (isPresenting && rightController?.controller) {
-    return (
-      <primitive object={rightController.controller}>
-        <GunMesh isShooting={isShooting} isReloading={isReloading} />
-      </primitive>
-    );
-  }
-
-  return (
-    <group position={isPresenting ? [0.2, -0.2, -0.4] : [0.25, -0.25, -0.5]}>
-      <GunMesh isShooting={isShooting} isReloading={isReloading} />
     </group>
   );
 }
