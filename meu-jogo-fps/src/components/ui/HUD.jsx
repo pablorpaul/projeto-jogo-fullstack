@@ -1,5 +1,4 @@
-import React from 'react';
-import { useXR } from '@react-three/xr';
+import React, { useState, useEffect } from 'react';
 import { Crosshair } from './crosshair';
 import { useGameStore } from '../../store/useGameStore';
 import { GAME_CONFIG } from '../../utils/constants';
@@ -11,12 +10,23 @@ function formatTime(seconds) {
 }
 
 export function HUD() {
-  const { isPresenting } = useXR();
   const { score, kills, ammo, playerHp, timeLeft, isReloading, hitMessage, damageFlash } = useGameStore();
   const hpPercentage = (playerHp / GAME_CONFIG.PLAYER_MAX_HP) * 100;
+  
+  // Escuta os eventos do VR com segurança (sem quebrar o React)
+  const [isVR, setIsVR] = useState(false);
+  useEffect(() => {
+    const handleVRStart = () => setIsVR(true);
+    const handleVREnd = () => setIsVR(false);
+    window.addEventListener('vr-start', handleVRStart);
+    window.addEventListener('vr-end', handleVREnd);
+    return () => {
+      window.removeEventListener('vr-start', handleVRStart);
+      window.removeEventListener('vr-end', handleVREnd);
+    };
+  }, []);
 
-  // Se estiver em VR, oculta a HUD 2D do DOM para não criar conflito visual/overlay
-  if (isPresenting) return null;
+  if (isVR) return null;
 
   return (
     <>

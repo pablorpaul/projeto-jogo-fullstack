@@ -56,12 +56,7 @@ function ExitVRButton({ camera }) {
   };
 
   return (
-    <group
-      ref={buttonRef}
-      onClick={handleExit}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-    >
+    <group ref={buttonRef} onClick={handleExit} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
       <mesh position={[0, 0, 0]}>
         <planeGeometry args={[0.3, 0.08]} />
         <meshBasicMaterial color={hovered ? '#ff176b' : '#351d4d'} />
@@ -83,6 +78,11 @@ export function Player() {
   const leftController = useController('left');
   const rightController = useController('right');
   const lastTriggerPressed = useRef(false);
+
+  // Avisa a HUD 2D para desaparecer/aparecer
+  useEffect(() => {
+    window.dispatchEvent(new Event(isPresenting ? 'vr-start' : 'vr-end'));
+  }, [isPresenting]);
 
   const pos = useRef(new THREE.Vector3(0, GAME_CONFIG.PLAYER_HEIGHT, 0));
   const velocityY = useRef(0);
@@ -118,20 +118,17 @@ export function Player() {
 
     const raycaster = new THREE.Raycaster();
 
-    // 1. Aponta o Raycaster a partir do controlador VR ou da câmara
-    if (isPresenting && rightController?.grp) {
+    if (isPresenting && rightController?.controller) {
       const controllerPos = new THREE.Vector3();
       const controllerDir = new THREE.Vector3(0, 0, -1);
 
-      rightController.grp.getWorldPosition(controllerPos);
-      controllerDir.applyQuaternion(rightController.grp.quaternion);
-
+      rightController.controller.getWorldPosition(controllerPos);
+      controllerDir.applyQuaternion(rightController.controller.quaternion);
       raycaster.set(controllerPos, controllerDir);
     } else {
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
     }
 
-    // 2. Procura alvos na cena
     const hitables = [];
     scene.traverse((child) => {
       if (child.isMesh) {
@@ -146,7 +143,6 @@ export function Player() {
       }
     });
 
-    // 3. Aplica o dano se houver colisão
     const intersects = raycaster.intersectObjects(hitables, true);
     if (intersects.length > 0) {
       let hitObj = intersects[0].object;
