@@ -3,32 +3,49 @@ import { useFrame } from '@react-three/fiber';
 import { useController, useXR } from '@react-three/xr';
 import * as THREE from 'three';
 
-function GunMesh({ isShooting, isReloading }) {
-  const gunGroupRef = useRef();
+export function Gun({ isShooting, isReloading }) {
+  const gunRef = useRef();
   const { isPresenting } = useXR();
+  const rightController = useController('right');
 
   useFrame((state, delta) => {
-    if (!gunGroupRef.current) return;
+    if (!gunRef.current) return;
     const t = state.clock.getElapsedTime();
 
-    if (isShooting) {
-      gunGroupRef.current.position.z = -0.05;
-      gunGroupRef.current.rotation.x = 0.15;
+    if (isPresenting) {
+      // Se o controlador do VR já foi instanciado, acopla a arma na mão
+      if (rightController?.grp) {
+        gunRef.current.position.copy(rightController.grp.position);
+        gunRef.current.quaternion.copy(rightController.grp.quaternion);
+        
+        // Ajuste de offset para o cabo da arma encaixar na mão
+        gunRef.current.translateZ(-0.1);
+        gunGroupOffset(gunRef.current, isShooting);
+      }
     } else {
-      gunGroupRef.current.position.z = THREE.MathUtils.lerp(gunGroupRef.current.position.z, -0.1, delta * 15);
-      gunGroupRef.current.rotation.x = THREE.MathUtils.lerp(gunGroupRef.current.rotation.x, 0, delta * 15);
-    }
+      // Posição para o modo Desktop (PC)
+      gunRef.current.position.x = 0.25 + Math.sin(t * 2) * 0.005;
+      gunRef.current.position.y = -0.25 + Math.cos(t * 4) * 0.005;
 
-    if (isReloading) {
-      gunGroupRef.current.rotation.z = Math.sin(t * 15) * 0.3;
-    } else {
-      gunGroupRef.current.rotation.z = THREE.MathUtils.lerp(gunGroupRef.current.rotation.z, 0, delta * 10);
+      if (isShooting) {
+        gunRef.current.position.z = -0.45;
+        gunRef.current.rotation.x = 0.15;
+      } else {
+        gunRef.current.position.z = THREE.MathUtils.lerp(gunRef.current.position.z, -0.5, delta * 15);
+        gunRef.current.rotation.x = THREE.MathUtils.lerp(gunRef.current.rotation.x, 0, delta * 15);
+      }
+
+      if (isReloading) {
+        gunRef.current.rotation.z = Math.sin(t * 15) * 0.3;
+      } else {
+        gunRef.current.rotation.z = THREE.MathUtils.lerp(gunRef.current.rotation.z, 0, delta * 10);
+      }
     }
   });
 
   return (
-    <group ref={gunGroupRef} position={[0, -0.02, -0.1]} rotation={[-Math.PI / 12, 0, 0]}>
-      {/* Corpo da arma */}
+    <group ref={gunRef} position={[0.25, -0.25, -0.5]}>
+      {/* Corpo principal */}
       <mesh position={[0, 0, 0]}>
         <boxGeometry args={[0.08, 0.12, 0.35]} />
         <meshBasicMaterial color="#1a1a24" />
@@ -48,16 +65,13 @@ function GunMesh({ isShooting, isReloading }) {
         <meshBasicMaterial color="#ff0055" />
       </mesh>
 
-      {/* Feixe de Laser para Mira VR */}
+      {/* Laser de Mira VR */}
       {isPresenting && (
         <group position={[0, 0.03, -0.325]}>
-          {/* Linha/Cilindro do Laser */}
           <mesh position={[0, 0, -7.5]} rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.003, 0.003, 15, 8]} />
             <meshBasicMaterial color="#ff0055" transparent opacity={0.6} />
           </mesh>
-
-          {/* Ponto indicador no final da mira */}
           <mesh position={[0, 0, -15]}>
             <sphereGeometry args={[0.025, 16, 16]} />
             <meshBasicMaterial color="#ff0055" />
@@ -68,21 +82,8 @@ function GunMesh({ isShooting, isReloading }) {
   );
 }
 
-export function Gun({ isShooting, isReloading }) {
-  const { isPresenting } = useXR();
-  const rightController = useController('right');
-
-  if (isPresenting && rightController?.grp) {
-    return (
-      <primitive object={rightController.grp}>
-        <GunMesh isShooting={isShooting} isReloading={isReloading} />
-      </primitive>
-    );
+function gunGroupOffset(gunGroup, isShooting) {
+  if (isShooting) {
+    gunGroup.translateZ(-0.02);
   }
-
-  return (
-    <group position={isPresenting ? [0.2, -0.2, -0.4] : [0.25, -0.25, -0.5]}>
-      <GunMesh isShooting={isShooting} isReloading={isReloading} />
-    </group>
-  );
 }

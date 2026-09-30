@@ -8,7 +8,6 @@ import { sfx } from '../../utils/soundEffects';
 import { useGameStore } from '../../store/useGameStore';
 import { Gun } from './gun';
 
-// HUD 3D que acompanha a visão no VR
 function VRHUD({ camera }) {
   const { ammo, playerHp, score, kills } = useGameStore();
   const hudRef = useRef();
@@ -17,7 +16,6 @@ function VRHUD({ camera }) {
     if (hudRef.current && camera) {
       hudRef.current.position.copy(camera.position);
       hudRef.current.quaternion.copy(camera.quaternion);
-
       hudRef.current.translateZ(-0.75);
       hudRef.current.translateY(0.28);
     }
@@ -39,7 +37,6 @@ function VRHUD({ camera }) {
   );
 }
 
-// Botão 3D para sair do modo VR
 function ExitVRButton({ camera }) {
   const { session } = useXR();
   const buttonRef = useRef();
@@ -49,17 +46,13 @@ function ExitVRButton({ camera }) {
     if (buttonRef.current && camera) {
       buttonRef.current.position.copy(camera.position);
       buttonRef.current.quaternion.copy(camera.quaternion);
-
-      // Posiciona o botão na parte inferior do campo de visão
       buttonRef.current.translateZ(-0.75);
       buttonRef.current.translateY(-0.35);
     }
   });
 
   const handleExit = () => {
-    if (session) {
-      session.end();
-    }
+    if (session) session.end();
   };
 
   return (
@@ -125,6 +118,7 @@ export function Player() {
 
     const raycaster = new THREE.Raycaster();
 
+    // 1. Raycaster direcionado a partir do controlador VR ou da Câmera
     if (isPresenting && rightController?.grp) {
       const controllerPos = new THREE.Vector3();
       const controllerDir = new THREE.Vector3(0, 0, -1);
@@ -137,32 +131,42 @@ export function Player() {
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
     }
 
+    // 2. Coleta de alvos na cena
     const hitables = [];
     scene.traverse((child) => {
-      if (child.isMesh && child.userData && child.userData.isTarget) hitables.push(child);
+      if (child.isMesh && (child.userData?.isTarget || child.parent?.userData?.isTarget)) {
+        hitables.push(child);
+      }
     });
 
+    // 3. Verificação de impacto e aplicação de dano
     const intersects = raycaster.intersectObjects(hitables, true);
     if (intersects.length > 0) {
-      const hitObj = intersects[0].object;
-      const targetId = hitObj.userData.targetId;
+      let hitObj = intersects[0].object;
+      
+      // Procura a ID do alvo subindo a árvore do objeto se necessário
+      let targetId = hitObj.userData?.targetId || hitObj.parent?.userData?.targetId;
 
       if (targetId) {
         sfx.playHit();
         setHitMessage('INIMIGO ATINGIDO!');
         setTimeout(() => setHitMessage(''), 800);
-        setEnemies((prev) => prev.map((e) => {
-          if (e.id === targetId) {
-            const newHp = e.hp - 1;
-            if (newHp <= 0) {
-              sfx.playDestroy();
-              setScore((s) => s + 100);
-              setKills((k) => k + 1);
-            }
-            return { ...e, hp: newHp };
-          }
-          return e;
-        }).filter((e) => e.hp > 0));
+        setEnemies((prev) =>
+          prev
+            .map((e) => {
+              if (e.id === targetId) {
+                const newHp = e.hp - 1;
+                if (newHp <= 0) {
+                  sfx.playDestroy();
+                  setScore((s) => s + 100);
+                  setKills((k) => k + 1);
+                }
+                return { ...e, hp: newHp };
+              }
+              return e;
+            })
+            .filter((e) => e.hp > 0)
+        );
       }
     }
   }, [camera, scene, ammo, isReloading, isPresenting, rightController, setAmmo, setScore, setKills, setEnemies, setHitMessage, handleReload]);
